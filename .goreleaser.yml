@@ -1,0 +1,37 @@
+version: 2
+
+builds:
+  - main: ./cmd/defi
+    binary: defi
+    env:
+      - CGO_ENABLED=0
+    ldflags:
+      - -s -w -X github.com/true-markets/defi-cli/internal/cli.Version={{.Version}} -X github.com/true-markets/defi-cli/internal/cli.CommitSHA={{.ShortCommit}}
+    goos:
+      - darwin
+      - linux
+      - windows
+    goarch:
+      - amd64
+      - arm64
+    ignore:
+      - goos: windows
+        goarch: arm64
+
+archives:
+  - format: tar.gz
+    format_overrides:
+      - goos: windows
+        format: zip
+    name_template: "{{ .ProjectName }}_{{ .Version }}_{{ .Os }}_{{ .Arch }}"
+
+checksum:
+  name_template: checksums.txt
+
+changelog:
+  sort: asc
+  filters:
+    exclude:
+      - "^docs:"
+      - "^chore:"
+      - "^ci:"

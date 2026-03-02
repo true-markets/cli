@@ -1,0 +1,734 @@
+openapi: 3.1.0
+info:
+  title: True Markets DeFi API
+  description: API for trading and managing digital assets
+  version: "2026-01-26"
+servers:
+  - url: https://api.truemarkets.co
+    description: Production server
+paths:
+  /v1/defi/core/balances:
+    get:
+      operationId: getBalances
+      summary: Get authenticated user balances
+      description: Returns balances for all wallets associated with the authenticated user
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: "#/components/parameters/version"
+        - name: evm
+          in: query
+          description: Include EVM chain balances
+          required: false
+          schema:
+            type: boolean
+            default: false
+      responses:
+        "200":
+          description: A list of balances
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/BalanceResponse"
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+        "500":
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+  /v1/defi/core/quote:
+    post:
+      operationId: createQuote
+      summary: Fetch a quote
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: "#/components/parameters/version"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/QuoteRequest"
+      responses:
+        "200":
+          description: A quote response
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/QuoteResponse"
+        "400":
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+        "422":
+          description: Invalid request payload
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+        "500":
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+  /v1/defi/core/trade:
+    post:
+      operationId: executeTrade
+      summary: Execute a trade synchronously
+      description: Executes a trade using a cached quote and returns the transaction hash.
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: "#/components/parameters/version"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/TradeRequest"
+      responses:
+        "200":
+          description: Trade executed successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TradeResponse"
+        "400":
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+        "422":
+          description: Invalid request payload
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+        "500":
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+  /v1/defi/core/transfer/prepare:
+    post:
+      operationId: prepareTransfer
+      summary: Prepare a transfer
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: "#/components/parameters/version"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/TransferPrepareRequest"
+      responses:
+        "200":
+          description: The transfer prepare response
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TransferPrepareResponse"
+        "400":
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+        "422":
+          description: Invalid request payload
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+        "500":
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+  /v1/defi/core/transfer/execute:
+    post:
+      operationId: executeTransfer
+      summary: Execute a transfer
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: "#/components/parameters/version"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/TransferExecuteRequest"
+      responses:
+        "200":
+          description: The transfer execute response
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TransferExecuteResponse"
+        "400":
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+        "404":
+          description: Transfer not found
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+        "422":
+          description: Invalid request payload
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+        "500":
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+  /v1/defi/core/profile/me:
+    get:
+      operationId: getProfile
+      summary: Get the authenticated user profile
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: "#/components/parameters/version"
+      responses:
+        "200":
+          description: The authenticated user profile
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ProfileResponse"
+        "400":
+          description: Bad request (invalid version format)
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+        "500":
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+  /v1/defi/core/create-wallet:
+    post:
+      operationId: createWallet
+      summary: Create a wallet with an API key
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: "#/components/parameters/version"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateWalletRequest"
+      responses:
+        "201":
+          description: Wallet created successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/WalletCreationResult"
+        "400":
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+        "500":
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+  /v1/defi/core/assets:
+    get:
+      operationId: getAssets
+      summary: Get all active assets
+      security: []
+      parameters:
+        - $ref: "#/components/parameters/version"
+        - name: evm
+          in: query
+          description: Include EVM chain assets
+          required: false
+          schema:
+            type: boolean
+            default: false
+      responses:
+        "200":
+          description: A list of active assets
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Asset"
+        "500":
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+components:
+  parameters:
+    version:
+      name: version
+      in: query
+      description: API version date (YYYY-MM-DD)
+      required: false
+      schema:
+        type: string
+        default: "2026-01-26"
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+  schemas:
+    Balance:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        chain:
+          type: string
+        asset:
+          type: string
+        symbol:
+          type: string
+        name:
+          type: string
+        decimals:
+          type: integer
+        icon:
+          type: string
+          nullable: true
+        tradeable:
+          type: boolean
+        stable:
+          type: boolean
+        balance:
+          type: string
+    BalanceResponse:
+      type: object
+      properties:
+        balances:
+          type: array
+          items:
+            $ref: "#/components/schemas/Balance"
+    QuoteRequest:
+      type: object
+      required:
+        - chain
+        - base_asset
+        - quote_asset
+        - order_side
+        - qty
+      properties:
+        chain:
+          type: string
+        base_asset:
+          type: string
+        quote_asset:
+          type: string
+        order_side:
+          type: string
+          enum: [buy, sell]
+        qty:
+          type: string
+    UnsignedPayload:
+      type: object
+      required:
+        - digest
+        - payload
+      properties:
+        digest:
+          type: string
+        payload:
+          type: string
+    QuoteResponse:
+      type: object
+      properties:
+        quote_id:
+          type: string
+        base_asset:
+          type: string
+        quote_asset:
+          type: string
+        order_side:
+          type: string
+        amount:
+          type: string
+        fee:
+          type: string
+        payloads:
+          type: array
+          items:
+            $ref: "#/components/schemas/UnsignedPayload"
+        issues:
+          type: array
+          items:
+            type: string
+    TradeRequest:
+      type: object
+      description: Trade execution request. Signatures are matched to cached server-side payloads.
+      required:
+        - quote_id
+        - signatures
+        - auth_type
+      properties:
+        quote_id:
+          type: string
+          description: The quote ID returned from the quote endpoint
+        signatures:
+          type: array
+          minItems: 1
+          items:
+            type: string
+          description: Signatures for the payloads returned from the quote endpoint (in order)
+        auth_type:
+          type: string
+          enum: [web_authn, api_key]
+          description: The authentication type used for signing
+    TradeResponse:
+      type: object
+      description: Synchronous trade response with order ID and transaction hash
+      properties:
+        order_id:
+          type: string
+          format: uuid
+          description: The created order ID
+        tx_hash:
+          type: string
+          description: The blockchain transaction hash
+    TransferPrepareRequest:
+      type: object
+      required:
+        - chain
+        - asset
+        - to
+        - qty
+        - qty_unit
+      properties:
+        chain:
+          type: string
+          description: Blockchain chain (e.g., solana, base)
+        asset:
+          type: string
+          description: Asset contract address
+        to:
+          type: string
+          description: Recipient address
+        qty:
+          type: string
+          description: Transfer quantity
+        qty_unit:
+          type: string
+          enum: [base, quote]
+          description: Unit of quantity (base for token amount, quote for USD)
+    TransferExecuteRequest:
+      type: object
+      required:
+        - transfer_id
+        - signatures
+        - auth_type
+      properties:
+        transfer_id:
+          type: string
+          format: uuid
+        signatures:
+          type: array
+          items:
+            type: string
+        auth_type:
+          type: string
+          enum: [web_authn, api_key]
+          description: The authentication type used for signing
+    TransferPrepareResponse:
+      type: object
+      properties:
+        transfer_id:
+          type: string
+          format: uuid
+        payloads:
+          type: array
+          items:
+            $ref: "#/components/schemas/UnsignedPayload"
+    TransferExecuteResponse:
+      type: object
+      properties:
+        tx_hash:
+          type: string
+        chain:
+          type: string
+        asset:
+          type: string
+        from:
+          type: string
+        to:
+          type: string
+        sent:
+          type: string
+        fee:
+          type: string
+        received:
+          type: string
+    ProfileResponse:
+      type: object
+      properties:
+        id:
+          type: string
+        email:
+          type: string
+          format: email
+        wallets:
+          type: array
+          items:
+            $ref: "#/components/schemas/Wallet"
+    Wallet:
+      type: object
+      properties:
+        chain:
+          type: string
+        address:
+          type: string
+    AssetImage:
+      type: object
+      properties:
+        thumb:
+          type: string
+        small:
+          type: string
+        large:
+          type: string
+    AssetMarketData:
+      type: object
+      properties:
+        circulating_supply:
+          type: integer
+          format: int64
+        total_supply:
+          type: integer
+          format: int64
+        max_supply:
+          type: integer
+          format: int64
+    AssetSocials:
+      type: object
+      properties:
+        x_username:
+          type: string
+        facebook_username:
+          type: string
+        subreddit_url:
+          type: string
+        official_forum_url:
+          type: string
+    Asset:
+      type: object
+      description: Asset details
+      properties:
+        id:
+          type: string
+          format: uuid
+        chain:
+          type: string
+        address:
+          type: string
+        symbol:
+          type: string
+        name:
+          type: string
+        slug:
+          type: string
+        decimals:
+          type: integer
+        description:
+          type: string
+        website:
+          type: string
+        icon:
+          type: string
+          nullable: true
+        is_active:
+          type: boolean
+        tradeable:
+          type: boolean
+        stable:
+          type: boolean
+        image:
+          $ref: "#/components/schemas/AssetImage"
+        market_data:
+          $ref: "#/components/schemas/AssetMarketData"
+        socials:
+          $ref: "#/components/schemas/AssetSocials"
+    CreateWalletRequest:
+      type: object
+      required:
+        - api_key
+      properties:
+        api_key:
+          type: object
+          required:
+            - public_key
+          properties:
+            public_key:
+              type: string
+    WalletCreationResult:
+      type: object
+      properties:
+        wallets:
+          type: array
+          items:
+            $ref: "#/components/schemas/CreatedWallet"
+    CreatedWallet:
+      type: object
+      properties:
+        wallet_id:
+          type: string
+        wallet_account_id:
+          type: string
+        address:
+          type: string
+        address_type:
+          type: string

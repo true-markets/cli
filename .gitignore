@@ -1,0 +1,10 @@
+/defi
+dist/
+.env
+.env.*
+*.swp
+*.swo
+*~
+.idea/
+.vscode/
+.DS_Store
