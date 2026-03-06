@@ -32,6 +32,13 @@ type quoteInputs struct {
 	QtyUnit    string
 }
 
+type quoteDisplay struct {
+	PayQty    string
+	PayLabel  string
+	RecvLabel string
+	FeeLabel  string
+}
+
 func newBuyCmd() *cobra.Command {
 	return newTradeCmd(string(client.Buy), string(client.Quote))
 }
@@ -107,20 +114,22 @@ func executeTradeFlow(cmd *cobra.Command, side, token, amount string) error {
 		return err
 	}
 
+	display := buildQuoteDisplay(inputs)
+
 	if dryRun {
-		return outputDryRunQuote(ctx, quoteResp)
+		return outputDryRunQuote(ctx, quoteResp, display)
 	}
 
-	if quoteResp.Issues != nil && len(*quoteResp.Issues) > 0 {
-		return errors.New("quote has warnings; cannot execute trade")
-	}
-
-	if quoteResp.Payloads == nil || len(*quoteResp.Payloads) == 0 {
+	if len(quoteResp.Payloads) == 0 {
 		return errors.New("quote response missing signing payloads")
 	}
 
 	// Show quote and confirm before executing
-	printQuotePlain(quoteResp)
+	printQuotePlain(quoteResp, display)
+
+	if len(quoteResp.Issues) > 0 {
+		return errors.New("cannot execute trade due to issues above")
+	}
 	if !force {
 		if ContextOutputJSON(ctx) {
 			return &CLIError{
@@ -139,16 +148,16 @@ func executeTradeFlow(cmd *cobra.Command, side, token, amount string) error {
 	}
 
 	// Sign payloads
-	signatures, err := signPayloads(*quoteResp.Payloads, apiKey)
+	signatures, err := signPayloads(quoteResp.Payloads, apiKey)
 	if err != nil {
 		return err
 	}
 
-	if quoteResp.QuoteId == nil || *quoteResp.QuoteId == "" {
+	if quoteResp.QuoteId == "" {
 		return errors.New("quote response missing quote_id")
 	}
 
-	tradeResult, err := executeTrade(ctx, cli, *quoteResp.QuoteId, signatures)
+	tradeResult, err := executeTrade(ctx, cli, quoteResp.QuoteId, signatures)
 	if err != nil {
 		return err
 	}
@@ -156,7 +165,7 @@ func executeTradeFlow(cmd *cobra.Command, side, token, amount string) error {
 	return outputTradeResult(ctx, tradeResult)
 }
 
-func outputDryRunQuote(ctx context.Context, quoteResp *client.QuoteResponse) error {
+func outputDryRunQuote(ctx context.Context, quoteResp *client.QuoteResponse, display quoteDisplay) error {
 	if ContextOutputJSON(ctx) {
 		wrapper := struct {
 			*client.QuoteResponse
@@ -171,7 +180,7 @@ func outputDryRunQuote(ctx context.Context, quoteResp *client.QuoteResponse) err
 		}
 		return nil
 	}
-	printQuotePlain(quoteResp)
+	printQuotePlain(quoteResp, display)
 	fmt.Println("\n(dry run - not executed)")
 	return nil
 }
@@ -334,27 +343,40 @@ func resolveAssetInput(
 	return "", fmt.Errorf("could not resolve symbol %s on chain %s", input, chain)
 }
 
-func printQuotePlain(quote *client.QuoteResponse) {
+func buildQuoteDisplay(inputs quoteInputs) quoteDisplay {
+	token := strings.ToUpper(inputs.BaseAsset)
+	if !isSymbolInput(inputs.BaseAsset) {
+		token = "tokens"
+	}
+
+	side := strings.ToLower(inputs.OrderSide)
+	qtyUnit := strings.ToLower(inputs.QtyUnit)
+
+	// Determine pay/receive labels based on side and qty unit.
+	// buy+quote:  pay USDC, receive token  (user typed USDC amount)
+	// sell+base:  pay token, receive USDC   (user typed token amount)
+	// buy+base:   pay token, receive USDC   (user typed token amount)
+	// sell+quote: pay USDC, receive token   (user typed USDC amount)
+	payUSDC := (side == string(client.Buy) && qtyUnit == string(client.Quote)) ||
+		(side == string(client.Sell) && qtyUnit == string(client.Quote))
+
+	if payUSDC {
+		return quoteDisplay{PayQty: inputs.Qty, PayLabel: "USDC", RecvLabel: token, FeeLabel: "USDC"}
+	}
+	return quoteDisplay{PayQty: inputs.Qty, PayLabel: token, RecvLabel: "USDC", FeeLabel: "USDC"}
+}
+
+func printQuotePlain(quote *client.QuoteResponse, display quoteDisplay) {
 	if quote == nil {
 		fmt.Println("No quote data")
 		return
 	}
 
-	side := strings.ToUpper(getStringValue(quote.OrderSide))
-	fmt.Printf("Side:       %s\n", side)
-
-	if quote.Amount != nil {
-		fmt.Printf("Amount:     %s\n", *quote.Amount)
-	}
-	if quote.Fee != nil {
-		fmt.Printf("Fee:        %s\n", *quote.Fee)
-	}
-	if quote.QuoteId != nil {
-		fmt.Printf("Quote ID:   %s\n", *quote.QuoteId)
-	}
-	if quote.Issues != nil && len(*quote.Issues) > 0 {
-		for _, issue := range *quote.Issues {
-			fmt.Printf("Warning:    %s\n", issue)
-		}
+	fmt.Printf("Side:         %s\n", strings.ToUpper(quote.OrderSide))
+	fmt.Printf("You pay:      %s %s\n", display.PayQty, display.PayLabel)
+	fmt.Printf("You receive:  %s %s\n", quote.QtyOut, display.RecvLabel)
+	fmt.Printf("Fee:          %s %s\n", quote.Fee, display.FeeLabel)
+	for _, issue := range quote.Issues {
+		fmt.Printf("Issue:        %s\n", issue)
 	}
 }
