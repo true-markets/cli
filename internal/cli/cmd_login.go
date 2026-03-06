@@ -254,4 +254,3 @@ func normalizeVerificationCode(code string) string {
 	code = strings.ReplaceAll(code, " ", "")
 	return code
 }
-
