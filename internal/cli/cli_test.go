@@ -568,6 +568,92 @@ func TestFetchWhoami(t *testing.T) {
 	})
 }
 
+func captureStdout(t *testing.T, fn func()) string {
+	t.Helper()
+	r, w, err := os.Pipe()
+	require.NoError(t, err)
+
+	origStdout := os.Stdout
+	os.Stdout = w
+
+	fn()
+
+	_ = w.Close()
+	os.Stdout = origStdout
+
+	var buf bytes.Buffer
+	_, err = buf.ReadFrom(r)
+	require.NoError(t, err)
+	return buf.String()
+}
+
+func TestPrintQuotePlain(t *testing.T) {
+	t.Run("all fields", func(t *testing.T) {
+		quote := &client.QuoteResponse{
+			OrderSide: "buy",
+			QtyOut:    "0.02",
+			Fee:       "0.01",
+			QuoteId:   "d513bb",
+		}
+		display := quoteDisplay{PayQty: "1.00", PayLabel: "USDC", RecvLabel: "SOL", FeeLabel: "USDC"}
+
+		got := captureStdout(t, func() { printQuotePlain(quote, display) })
+
+		assert.Contains(t, got, "Side:         BUY")
+		assert.Contains(t, got, "You pay:      1.00 USDC")
+		assert.Contains(t, got, "You receive:  0.02 SOL")
+		assert.Contains(t, got, "Fee:          0.01 USDC")
+		assert.NotContains(t, got, "Quote ID")
+	})
+
+	t.Run("with issues", func(t *testing.T) {
+		quote := &client.QuoteResponse{
+			OrderSide: "buy",
+			QtyOut:    "5.00",
+			Issues:    []string{"insufficient balance", "trade size below minimum"},
+		}
+		display := quoteDisplay{PayQty: "100", PayLabel: "USDC", RecvLabel: "SOL", FeeLabel: "USDC"}
+
+		got := captureStdout(t, func() { printQuotePlain(quote, display) })
+
+		assert.Contains(t, got, "Issue:        insufficient balance")
+		assert.Contains(t, got, "Issue:        trade size below minimum")
+	})
+
+	t.Run("nil quote", func(t *testing.T) {
+		display := quoteDisplay{PayQty: "1", PayLabel: "USDC", RecvLabel: "SOL", FeeLabel: "USDC"}
+
+		got := captureStdout(t, func() { printQuotePlain(nil, display) })
+
+		assert.Contains(t, got, "No quote data")
+	})
+}
+
+func TestBuildQuoteDisplay(t *testing.T) {
+	t.Run("buy with quote unit", func(t *testing.T) {
+		inputs := quoteInputs{OrderSide: "buy", BaseAsset: "SOL", Qty: "100", QtyUnit: "quote"}
+		d := buildQuoteDisplay(inputs)
+		assert.Equal(t, "100", d.PayQty)
+		assert.Equal(t, "USDC", d.PayLabel)
+		assert.Equal(t, "SOL", d.RecvLabel)
+	})
+
+	t.Run("sell with base unit", func(t *testing.T) {
+		inputs := quoteInputs{OrderSide: "sell", BaseAsset: "SOL", Qty: "5", QtyUnit: "base"}
+		d := buildQuoteDisplay(inputs)
+		assert.Equal(t, "5", d.PayQty)
+		assert.Equal(t, "SOL", d.PayLabel)
+		assert.Equal(t, "USDC", d.RecvLabel)
+	})
+
+	t.Run("address input uses generic label", func(t *testing.T) {
+		inputs := quoteInputs{OrderSide: "buy", BaseAsset: "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v", Qty: "50", QtyUnit: "quote"}
+		d := buildQuoteDisplay(inputs)
+		assert.Equal(t, "USDC", d.PayLabel)
+		assert.Equal(t, "tokens", d.RecvLabel)
+	})
+}
+
 func TestFetchBalances(t *testing.T) {
 	// fetchBalances is inlined in runBalances, so we test the decode path
 	// by creating a mock server and calling the client + decoding manually,

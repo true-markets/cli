@@ -488,6 +488,15 @@ components:
           type: string
     QuoteResponse:
       type: object
+      required:
+        - quote_id
+        - order_side
+        - base_asset
+        - quote_asset
+        - qty_out
+        - fee
+        - payloads
+        - issues
       properties:
         quote_id:
           type: string
@@ -497,7 +506,7 @@ components:
           type: string
         order_side:
           type: string
-        amount:
+        qty_out:
           type: string
         fee:
           type: string
