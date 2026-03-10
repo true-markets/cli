@@ -9,6 +9,33 @@ import (
 	"github.com/spf13/cobra"
 )
 
+// hyperlink wraps text in an OSC 8 terminal hyperlink escape sequence.
+// In supported terminals (iTerm2, macOS Terminal, Warp, Ghostty) the text
+// becomes command-clickable. Unsupported terminals display the text as-is.
+func hyperlink(url, text string) string {
+	return fmt.Sprintf("\033]8;;%s\033\\%s\033]8;;\033\\", url, text)
+}
+
+// txExplorerURL returns a block-explorer URL for the given transaction hash.
+func txExplorerURL(chain, hash string) string {
+	switch strings.ToLower(chain) {
+	case chainBase:
+		return "https://basescan.org/tx/" + hash
+	default:
+		return "https://solscan.io/tx/" + hash
+	}
+}
+
+// addressExplorerURL returns a block-explorer URL for the given address.
+func addressExplorerURL(chain, address string) string {
+	switch strings.ToLower(chain) {
+	case chainBase:
+		return "https://basescan.org/address/" + address
+	default:
+		return "https://solscan.io/account/" + address
+	}
+}
+
 func getStringValue(s *string) string {
 	if s == nil {
 		return ""

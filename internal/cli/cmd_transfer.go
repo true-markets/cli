@@ -78,11 +78,12 @@ func executeTransferFlow(cmd *cobra.Command, to, token, amount string) error {
 		if err != nil {
 			return fmt.Errorf("fetch assets: %w", err)
 		}
-		resolved, err := resolveAssetInput(chain, token, assets)
+		resolved, resolvedChain, err := resolveSymbol(token, assets)
 		if err != nil {
 			return fmt.Errorf("resolve asset: %w", err)
 		}
 		assetAddress = resolved
+		chain = resolvedChain
 	}
 
 	// Prepare transfer
@@ -163,7 +164,12 @@ func outputTransferResult(ctx context.Context, executeResp *client.TransferExecu
 	}
 
 	fmt.Println("Transfer submitted successfully")
-	fmt.Printf("Transaction Hash: %s\n", getStringValue(executeResp.TxHash))
+	if executeResp.TxHash != nil && *executeResp.TxHash != "" {
+		hash := *executeResp.TxHash
+		chain := getStringValue(executeResp.Chain)
+		url := txExplorerURL(chain, hash)
+		fmt.Printf("Transaction Hash: %s\n", hyperlink(url, hash))
+	}
 	if executeResp.Chain != nil {
 		fmt.Printf("Chain: %s\n", titleCase(*executeResp.Chain))
 	}

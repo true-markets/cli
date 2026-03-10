@@ -89,5 +89,16 @@ func runWhoami(cmd *cobra.Command, _ []string) error {
 		})
 	}
 	tbl.Render(os.Stdout)
+
+	fmt.Println()
+	for _, w := range wallets {
+		chain := getStringValue(w.Chain)
+		if strings.EqualFold(chain, "evm") {
+			chain = "base"
+		}
+		addr := getStringValue(w.Address)
+		url := addressExplorerURL(chain, addr)
+		fmt.Printf("%s: %s\n", titleCase(chain), hyperlink(url, url))
+	}
 	return nil
 }

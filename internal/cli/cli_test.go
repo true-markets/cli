@@ -123,6 +123,48 @@ func TestResolveAssetInput(t *testing.T) {
 	})
 }
 
+func TestResolveSymbol(t *testing.T) {
+	solAddr := "So11111111111111111111111111111111111111112"
+	solSymbol := "SOL"
+	solChain := chainSolana
+
+	ethAddr := "0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE"
+	ethSymbol := "ETH"
+	baseChain := chainBase
+
+	assets := []client.Asset{
+		{Symbol: &solSymbol, Address: &solAddr, Chain: &solChain},
+		{Symbol: &ethSymbol, Address: &ethAddr, Chain: &baseChain},
+	}
+
+	t.Run("resolves SOL", func(t *testing.T) {
+		addr, chain, err := resolveSymbol("SOL", assets)
+		require.NoError(t, err)
+		assert.Equal(t, solAddr, addr)
+		assert.Equal(t, chainSolana, chain)
+	})
+
+	t.Run("resolves ETH on base", func(t *testing.T) {
+		addr, chain, err := resolveSymbol("eth", assets)
+		require.NoError(t, err)
+		assert.Equal(t, ethAddr, addr)
+		assert.Equal(t, chainBase, chain)
+	})
+
+	t.Run("case insensitive", func(t *testing.T) {
+		addr, chain, err := resolveSymbol("sol", assets)
+		require.NoError(t, err)
+		assert.Equal(t, solAddr, addr)
+		assert.Equal(t, chainSolana, chain)
+	})
+
+	t.Run("not found", func(t *testing.T) {
+		_, _, err := resolveSymbol("NOPE", assets)
+		require.Error(t, err)
+		assert.Contains(t, err.Error(), "could not resolve symbol NOPE")
+	})
+}
+
 func TestFilterAssetsByChain(t *testing.T) {
 	sol := chainSolana
 	base := chainBase
@@ -587,6 +629,47 @@ func captureStdout(t *testing.T, fn func()) string {
 	return buf.String()
 }
 
+func TestHyperlink(t *testing.T) {
+	got := hyperlink("https://example.com", "click me")
+	assert.Equal(t, "\033]8;;https://example.com\033\\click me\033]8;;\033\\", got)
+}
+
+func TestTxExplorerURL(t *testing.T) {
+	tests := []struct {
+		chain string
+		hash  string
+		want  string
+	}{
+		{"solana", "5xabc", "https://solscan.io/tx/5xabc"},
+		{"Solana", "5xabc", "https://solscan.io/tx/5xabc"},
+		{"base", "0xdef", "https://basescan.org/tx/0xdef"},
+		{"Base", "0xdef", "https://basescan.org/tx/0xdef"},
+	}
+	for _, tt := range tests {
+		t.Run(tt.chain, func(t *testing.T) {
+			assert.Equal(t, tt.want, txExplorerURL(tt.chain, tt.hash))
+		})
+	}
+}
+
+func TestAddressExplorerURL(t *testing.T) {
+	tests := []struct {
+		chain   string
+		address string
+		want    string
+	}{
+		{"solana", "5xabc", "https://solscan.io/account/5xabc"},
+		{"Solana", "5xabc", "https://solscan.io/account/5xabc"},
+		{"base", "0xdef", "https://basescan.org/address/0xdef"},
+		{"Base", "0xdef", "https://basescan.org/address/0xdef"},
+	}
+	for _, tt := range tests {
+		t.Run(tt.chain, func(t *testing.T) {
+			assert.Equal(t, tt.want, addressExplorerURL(tt.chain, tt.address))
+		})
+	}
+}
+
 func TestPrintQuotePlain(t *testing.T) {
 	t.Run("all fields", func(t *testing.T) {
 		quote := &client.QuoteResponse{
@@ -595,10 +678,11 @@ func TestPrintQuotePlain(t *testing.T) {
 			Fee:       "0.01",
 			QuoteId:   "d513bb",
 		}
-		display := quoteDisplay{PayQty: "1.00", PayLabel: "USDC", RecvLabel: "SOL", FeeLabel: "USDC"}
+		display := quoteDisplay{Chain: "solana", PayQty: "1.00", PayLabel: "USDC", RecvLabel: "SOL", FeeLabel: "USDC"}
 
 		got := captureStdout(t, func() { printQuotePlain(quote, display) })
 
+		assert.Contains(t, got, "Chain:        Solana")
 		assert.Contains(t, got, "Side:         BUY")
 		assert.Contains(t, got, "You pay:      1.00 USDC")
 		assert.Contains(t, got, "You receive:  0.02 SOL")
