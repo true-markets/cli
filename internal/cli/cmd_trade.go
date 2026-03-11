@@ -405,6 +405,10 @@ func printQuotePlain(quote *client.QuoteResponse, display quoteDisplay) {
 	fmt.Printf("You receive:  %s %s\n", quote.QtyOut, display.RecvLabel)
 	fmt.Printf("Fee:          %s %s\n", quote.Fee, display.FeeLabel)
 	for _, issue := range quote.Issues {
-		fmt.Printf("Issue:        %s\n", issue)
+		msg := issue.Message
+		if issue.Balance != nil {
+			msg += fmt.Sprintf(" (have %s, need %s)", issue.Balance.Actual, issue.Balance.Expected)
+		}
+		fmt.Printf("Issue:        %s\n", msg)
 	}
 }

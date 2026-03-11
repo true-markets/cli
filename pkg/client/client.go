@@ -176,6 +176,18 @@ type ProfileResponse struct {
 	Wallets *[]Wallet            `json:"wallets,omitempty"`
 }
 
+// QuoteIssue defines model for QuoteIssue.
+type QuoteIssue struct {
+	Balance *QuoteIssueBalance `json:"balance,omitempty"`
+	Message string             `json:"message"`
+}
+
+// QuoteIssueBalance defines model for QuoteIssueBalance.
+type QuoteIssueBalance struct {
+	Actual   string `json:"actual"`
+	Expected string `json:"expected"`
+}
+
 // QuoteRequest defines model for QuoteRequest.
 type QuoteRequest struct {
 	BaseAsset  string                `json:"base_asset"`
@@ -192,9 +204,11 @@ type QuoteRequestOrderSide string
 type QuoteResponse struct {
 	BaseAsset  string            `json:"base_asset"`
 	Fee        string            `json:"fee"`
-	Issues     []string          `json:"issues"`
+	FeeAsset   string            `json:"fee_asset"`
+	Issues     []QuoteIssue      `json:"issues"`
 	OrderSide  string            `json:"order_side"`
 	Payloads   []UnsignedPayload `json:"payloads"`
+	Qty        string            `json:"qty"`
 	QtyOut     string            `json:"qty_out"`
 	QuoteAsset string            `json:"quote_asset"`
 	QuoteId    string            `json:"quote_id"`

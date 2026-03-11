@@ -694,13 +694,16 @@ func TestPrintQuotePlain(t *testing.T) {
 		quote := &client.QuoteResponse{
 			OrderSide: "buy",
 			QtyOut:    "5.00",
-			Issues:    []string{"insufficient balance", "trade size below minimum"},
+			Issues: []client.QuoteIssue{
+				{Message: "insufficient balance", Balance: &client.QuoteIssueBalance{Actual: "50", Expected: "100"}},
+				{Message: "trade size below minimum"},
+			},
 		}
 		display := quoteDisplay{PayQty: "100", PayLabel: "USDC", RecvLabel: "SOL", FeeLabel: "USDC"}
 
 		got := captureStdout(t, func() { printQuotePlain(quote, display) })
 
-		assert.Contains(t, got, "Issue:        insufficient balance")
+		assert.Contains(t, got, "Issue:        insufficient balance (have 50, need 100)")
 		assert.Contains(t, got, "Issue:        trade size below minimum")
 	})
 
