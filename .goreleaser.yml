@@ -3,27 +3,8 @@ version: 2
 project_name: tm
 
 builds:
-  - id: tm
-    main: ./cmd/tm
+  - main: ./cmd/tm
     binary: tm
-    env:
-      - CGO_ENABLED=0
-    ldflags:
-      - -s -w -X github.com/true-markets/cli/internal/cli.Version={{.Version}} -X github.com/true-markets/cli/internal/cli.CommitSHA={{.ShortCommit}}
-    goos:
-      - darwin
-      - linux
-      - windows
-    goarch:
-      - amd64
-      - arm64
-    ignore:
-      - goos: windows
-        goarch: arm64
-
-  - id: truemarkets
-    main: ./cmd/truemarkets
-    binary: truemarkets
     env:
       - CGO_ENABLED=0
     ldflags:
