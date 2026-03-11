@@ -1,4 +1,4 @@
-module github.com/true-markets/defi-cli
+module github.com/true-markets/cli
 
 go 1.25.0
 

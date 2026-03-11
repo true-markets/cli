@@ -110,7 +110,7 @@ func requestAndVerifyOTC(ctx context.Context, host, email, code string) (*authTo
 		return nil, fmt.Errorf("create request: %w", err)
 	}
 	req.Header.Set("Content-Type", "application/json")
-	req.Header.Set("User-Agent", "defi/"+Version)
+	req.Header.Set("User-Agent", "tm/"+Version)
 
 	resp, err := httpClient.Do(req)
 	if err != nil {
@@ -194,7 +194,7 @@ func verifyOTC(
 		return nil, fmt.Errorf("create request: %w", err)
 	}
 	req.Header.Set("Content-Type", "application/json")
-	req.Header.Set("User-Agent", "defi/"+Version)
+	req.Header.Set("User-Agent", "tm/"+Version)
 
 	resp, err := httpClient.Do(req)
 	if err != nil {

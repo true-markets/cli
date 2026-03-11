@@ -1,4 +1,4 @@
-# True Markets DeFi CLI
+# True Markets CLI
 
 Trade crypto from your terminal. Designed for human and agent traders.
 
@@ -10,44 +10,77 @@ Trade crypto from your terminal. Designed for human and agent traders.
 
 Requires [Go](https://go.dev/doc/install) 1.25+.
 
-#### Latest release
+#### Option 1: Latest release
 
 ```bash
-go install github.com/true-markets/defi-cli/cmd/defi@latest
+go install github.com/true-markets/cli/cmd/tm@latest
 ```
 
-#### From source
+Make sure your Go bin directory is in your PATH:
 
 ```bash
-git clone https://github.com/true-markets/defi-cli.git
-cd defi-cli
-make install
+export PATH="$HOME/go/bin:$PATH"
+```
+
+#### Option 2: From source
+
+```bash
+git clone https://github.com/true-markets/cli.git
+```
+
+```bash
+cd cli && make install
 ```
 
 Confirm it's installed:
 
 ```bash
-defi --version
+tm --version
 ```
+
+Both `tm` and `truemarkets` work as binary names.
 
 ## Setup
 
+Create an account. Replace `<your-email>` with your email address. A verification code will be sent to it:
+
 ```bash
-defi signup user@email.com   # create account and wallets
-defi whoami                   # verify your email and wallet addresses
+tm signup <your-email>
 ```
 
-Returning users can log in with `defi login`.
+Verify your email and wallet addresses:
+
+```bash
+tm whoami
+```
+
+Returning users can log in with `tm login`.
+
+### Fund your account
+
+To start trading, send funds to the wallet address shown by `tm whoami`:
+
+- **Solana**: Send USDC on Solana to your Solana wallet address
+- **Base**: Send USDC on Base to your Base wallet address
+
+Check your balances:
+
+```bash
+tm balances
+```
 
 ## Use with AI agents
 
-Install the DeFi skill so your agent knows how to use the CLI. Uses Vercel's [skills](https://github.com/vercel-labs/skills) tool. Requires [Node.js](https://nodejs.org/) 18+.
+Requires [Node.js](https://nodejs.org/) 18+.
+
+Install skills so your agent knows how to use the CLI. Uses Vercel's [skills](https://github.com/vercel-labs/skills) tool.
 
 ```bash
-npx skills add true-markets/defi-cli
+npx skills add true-markets/cli/skills/truemarkets
+npx skills add true-markets/cli/skills/limit-order
 ```
 
-Works with Claude Code, Codex, Cursor, OpenCode, and other agents that support skills. Once installed, ask your agent to check your balances, buy tokens, or transfer funds.
+Works with Claude Code, Codex, Cursor, OpenCode, and other agents that support skills. Once installed, ask your agent to check your balances, buy tokens, place limit orders, or transfer funds.
 
 ## License
 

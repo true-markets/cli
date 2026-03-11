@@ -1,19 +1,19 @@
 ---
-name: defi
+name: truemarkets
 description: Buy tokens, sell tokens, check balances, transfer crypto, DeFi trading, portfolio, swap
 allowed-tools:
-  - Bash(defi *)
+  - Bash(tm *)
 license: MIT
 ---
 
 # DeFi Trading CLI
 
-Trade crypto via the True Markets DeFi CLI. Supports Solana and Base chains. Quote asset is always USDC.
+Trade crypto via the True Markets CLI. Supports Solana and Base chains. Quote asset is always USDC.
 
 ## Prerequisites
 
-1. CLI installed: `go install github.com/true-markets/defi-cli/cmd/defi@latest`
-2. Signed up: `defi signup user@email.com` (creates account, wallet, and API key in one step)
+1. CLI installed: `go install github.com/true-markets/cli/cmd/tm@latest`
+2. Signed up: `tm signup user@email.com` (creates account, wallet, and API key in one step)
 
 ## Rules
 
@@ -28,7 +28,7 @@ Trade crypto via the True Markets DeFi CLI. Supports Solana and Base chains. Quo
 ### Check account info
 
 ```bash
-defi whoami -o json
+tm whoami -o json
 ```
 
 Returns profile email and wallet addresses (one per chain).
@@ -48,9 +48,9 @@ Example output:
 ### List available tokens
 
 ```bash
-defi assets -o json
-defi assets --chain solana -o json
-defi assets --chain base -o json
+tm assets -o json
+tm assets --chain solana -o json
+tm assets --chain base -o json
 ```
 
 | Flag | Default | Description |
@@ -69,9 +69,9 @@ Example output:
 ### Show balances
 
 ```bash
-defi balances -o json
-defi balances --chain solana -o json
-defi balances --detailed -o json
+tm balances -o json
+tm balances --chain solana -o json
+tm balances --detailed -o json
 ```
 
 | Flag | Default | Description |
@@ -94,10 +94,10 @@ Example output:
 
 ```bash
 # Buy $50 of SOL (amount in quote/USDC by default)
-defi buy SOL 50 -o json --dry-run
+tm buy SOL 50 -o json --dry-run
 
 # Buy 1.5 SOL (amount in base units)
-defi buy SOL 1.5 --qty-unit base -o json --dry-run
+tm buy SOL 1.5 --qty-unit base -o json --dry-run
 ```
 
 | Flag | Default | Description |
@@ -112,10 +112,10 @@ Dry-run output includes `"executed": false`. Live execution returns order ID and
 
 ```bash
 # Sell 1.5 SOL (amount in base units by default)
-defi sell SOL 1.5 -o json --dry-run
+tm sell SOL 1.5 -o json --dry-run
 
 # Sell $50 worth of SOL
-defi sell SOL 50 --qty-unit quote -o json --dry-run
+tm sell SOL 50 --qty-unit quote -o json --dry-run
 ```
 
 | Flag | Default | Description |
@@ -128,10 +128,10 @@ defi sell SOL 50 --qty-unit quote -o json --dry-run
 
 ```bash
 # Preview transfer
-defi transfer <address> SOL 1.5 -o json --dry-run
+tm transfer <address> SOL 1.5 -o json --dry-run
 
 # Execute transfer (--force required)
-defi transfer <address> SOL 1.5 -o json --force
+tm transfer <address> SOL 1.5 -o json --force
 ```
 
 | Flag | Default | Description |
@@ -145,10 +145,10 @@ defi transfer <address> SOL 1.5 -o json --force
 
 ```bash
 # Show config (api_key is masked)
-defi config show -o json
+tm config show -o json
 
 # Set API key
-defi config set api_key <your-key>
+tm config set api_key <your-key>
 ```
 
 ## Error handling

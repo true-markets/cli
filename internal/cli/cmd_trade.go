@@ -10,8 +10,8 @@ import (
 
 	"github.com/spf13/cobra"
 
-	"github.com/true-markets/defi-cli/internal/cli/output"
-	"github.com/true-markets/defi-cli/pkg/client"
+	"github.com/true-markets/cli/internal/cli/output"
+	"github.com/true-markets/cli/pkg/client"
 )
 
 // USDC addresses per chain.
@@ -33,6 +33,7 @@ type quoteInputs struct {
 }
 
 type quoteDisplay struct {
+	Chain     string
 	PayQty    string
 	PayLabel  string
 	RecvLabel string
@@ -77,7 +78,7 @@ func executeTradeFlow(cmd *cobra.Command, side, token, amount string) error {
 	ctx = cmd.Context() // re-read in case requireAuth updated it
 
 	if apiKey == "" {
-		return &CLIError{Code: ExitAuth, Message: "api key required - run 'defi config set api_key <key>'"}
+		return &CLIError{Code: ExitAuth, Message: "api key required - run 'tm config set api_key <key>'"}
 	}
 
 	cli, err := newAPIClient(host, authToken)
@@ -109,11 +110,12 @@ func executeTradeFlow(cmd *cobra.Command, side, token, amount string) error {
 		QtyUnit:    qtyUnit,
 	}
 
-	quoteResp, err := requestQuote(ctx, cli, inputs)
+	quoteResp, err := requestQuote(ctx, cli, &inputs)
 	if err != nil {
 		return err
 	}
 
+	chain = inputs.Chain
 	display := buildQuoteDisplay(inputs)
 
 	if dryRun {
@@ -162,7 +164,7 @@ func executeTradeFlow(cmd *cobra.Command, side, token, amount string) error {
 		return err
 	}
 
-	return outputTradeResult(ctx, tradeResult)
+	return outputTradeResult(ctx, tradeResult, chain)
 }
 
 func outputDryRunQuote(ctx context.Context, quoteResp *client.QuoteResponse, display quoteDisplay) error {
@@ -185,7 +187,7 @@ func outputDryRunQuote(ctx context.Context, quoteResp *client.QuoteResponse, dis
 	return nil
 }
 
-func outputTradeResult(ctx context.Context, tradeResult *client.TradeResponse) error {
+func outputTradeResult(ctx context.Context, tradeResult *client.TradeResponse, chain string) error {
 	if ContextOutputJSON(ctx) {
 		if err := output.WriteJSON(os.Stdout, tradeResult); err != nil {
 			return fmt.Errorf("write json: %w", err)
@@ -194,11 +196,10 @@ func outputTradeResult(ctx context.Context, tradeResult *client.TradeResponse) e
 	}
 
 	fmt.Println("Trade submitted successfully")
-	if tradeResult.OrderId != nil {
-		fmt.Printf("Order ID: %s\n", tradeResult.OrderId.String())
-	}
 	if tradeResult.TxHash != nil && *tradeResult.TxHash != "" {
-		fmt.Printf("Transaction Hash: %s\n", *tradeResult.TxHash)
+		hash := *tradeResult.TxHash
+		url := txExplorerURL(chain, hash)
+		fmt.Printf("Transaction Hash: %s\n", hyperlink(url, hash))
 	}
 
 	return nil
@@ -261,7 +262,7 @@ func getQuoteAssetForChain(chain string) string {
 func requestQuote(
 	ctx context.Context,
 	cli *client.ClientWithResponses,
-	inputs quoteInputs,
+	inputs *quoteInputs,
 ) (*client.QuoteResponse, error) {
 	// Resolve base asset (symbol → address if needed)
 	baseAddress := inputs.BaseAsset
@@ -270,11 +271,13 @@ func requestQuote(
 		if err != nil {
 			return nil, fmt.Errorf("fetch assets for symbol resolution: %w", err)
 		}
-		resolved, err := resolveAssetInput(inputs.Chain, baseAddress, assets)
+		resolved, chain, err := resolveSymbol(baseAddress, assets)
 		if err != nil {
 			return nil, fmt.Errorf("resolve asset: %w", err)
 		}
 		baseAddress = resolved
+		inputs.Chain = chain
+		inputs.QuoteAsset = getQuoteAssetForChain(chain)
 	}
 
 	req := client.QuoteRequest{
@@ -343,6 +346,28 @@ func resolveAssetInput(
 	return "", fmt.Errorf("could not resolve symbol %s on chain %s", input, chain)
 }
 
+// resolveSymbol resolves a symbol across all chains, returning the
+// address and chain of the first match.
+func resolveSymbol(input string, assets []client.Asset) (address, chain string, err error) {
+	lowerSymbol := strings.ToLower(input)
+
+	for _, asset := range assets {
+		if asset.Symbol == nil || asset.Address == nil || asset.Chain == nil {
+			continue
+		}
+		if !strings.EqualFold(*asset.Symbol, lowerSymbol) {
+			continue
+		}
+		addr := strings.TrimSpace(*asset.Address)
+		if addr == "" {
+			continue
+		}
+		return addr, strings.ToLower(*asset.Chain), nil
+	}
+
+	return "", "", fmt.Errorf("could not resolve symbol %s", input)
+}
+
 func buildQuoteDisplay(inputs quoteInputs) quoteDisplay {
 	token := strings.ToUpper(inputs.BaseAsset)
 	if !isSymbolInput(inputs.BaseAsset) {
@@ -361,9 +386,9 @@ func buildQuoteDisplay(inputs quoteInputs) quoteDisplay {
 		(side == string(client.Sell) && qtyUnit == string(client.Quote))
 
 	if payUSDC {
-		return quoteDisplay{PayQty: inputs.Qty, PayLabel: "USDC", RecvLabel: token, FeeLabel: "USDC"}
+		return quoteDisplay{Chain: inputs.Chain, PayQty: inputs.Qty, PayLabel: "USDC", RecvLabel: token, FeeLabel: "USDC"}
 	}
-	return quoteDisplay{PayQty: inputs.Qty, PayLabel: token, RecvLabel: "USDC", FeeLabel: "USDC"}
+	return quoteDisplay{Chain: inputs.Chain, PayQty: inputs.Qty, PayLabel: token, RecvLabel: "USDC", FeeLabel: "USDC"}
 }
 
 func printQuotePlain(quote *client.QuoteResponse, display quoteDisplay) {
@@ -372,11 +397,18 @@ func printQuotePlain(quote *client.QuoteResponse, display quoteDisplay) {
 		return
 	}
 
+	if display.Chain != "" {
+		fmt.Printf("Chain:        %s\n", titleCase(display.Chain))
+	}
 	fmt.Printf("Side:         %s\n", strings.ToUpper(quote.OrderSide))
 	fmt.Printf("You pay:      %s %s\n", display.PayQty, display.PayLabel)
 	fmt.Printf("You receive:  %s %s\n", quote.QtyOut, display.RecvLabel)
 	fmt.Printf("Fee:          %s %s\n", quote.Fee, display.FeeLabel)
 	for _, issue := range quote.Issues {
-		fmt.Printf("Issue:        %s\n", issue)
+		msg := issue.Message
+		if issue.Balance != nil {
+			msg += fmt.Sprintf(" (have %s, need %s)", issue.Balance.Actual, issue.Balance.Expected)
+		}
+		fmt.Printf("Issue:        %s\n", msg)
 	}
 }

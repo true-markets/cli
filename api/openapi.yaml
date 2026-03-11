@@ -486,6 +486,25 @@ components:
           type: string
         payload:
           type: string
+    QuoteIssueBalance:
+      type: object
+      required:
+        - actual
+        - expected
+      properties:
+        actual:
+          type: string
+        expected:
+          type: string
+    QuoteIssue:
+      type: object
+      required:
+        - message
+      properties:
+        message:
+          type: string
+        balance:
+          $ref: "#/components/schemas/QuoteIssueBalance"
     QuoteResponse:
       type: object
       required:
@@ -493,7 +512,9 @@ components:
         - order_side
         - base_asset
         - quote_asset
+        - qty
         - qty_out
+        - fee_asset
         - fee
         - payloads
         - issues
@@ -506,7 +527,11 @@ components:
           type: string
         order_side:
           type: string
+        qty:
+          type: string
         qty_out:
+          type: string
+        fee_asset:
           type: string
         fee:
           type: string
@@ -517,7 +542,7 @@ components:
         issues:
           type: array
           items:
-            type: string
+            $ref: "#/components/schemas/QuoteIssue"
     TradeRequest:
       type: object
       description: Trade execution request. Signatures are matched to cached server-side payloads.

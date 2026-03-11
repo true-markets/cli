@@ -6,7 +6,7 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/true-markets/defi-cli/pkg/client"
+	"github.com/true-markets/cli/pkg/client"
 )
 
 const (
@@ -16,7 +16,7 @@ const (
 
 // resolveAuthToken returns the bearer token from env var or stored credentials.
 func resolveAuthToken(ctx context.Context) string {
-	if v := envVar("DEFI_AUTH_TOKEN"); v != "" {
+	if v := envVar("TM_AUTH_TOKEN"); v != "" {
 		return v
 	}
 	tm := NewTokenManager()
@@ -29,7 +29,7 @@ func resolveAuthToken(ctx context.Context) string {
 
 // resolveAPIKey returns the API key from env var or per-user key store.
 func resolveAPIKey(email string) string {
-	if v := envVar("DEFI_API_KEY"); v != "" {
+	if v := envVar("TM_API_KEY"); v != "" {
 		return v
 	}
 	if email != "" {
@@ -48,7 +48,7 @@ func newAPIClient(host, authToken string) (*client.ClientWithResponses, error) {
 		host,
 		client.WithHTTPClient(httpClient),
 		client.WithRequestEditorFn(func(_ context.Context, req *http.Request) error {
-			req.Header.Set("User-Agent", "defi/"+Version)
+			req.Header.Set("User-Agent", "tm/"+Version)
 			if authToken != "" {
 				req.Header.Set("Authorization", "Bearer "+authToken)
 			}

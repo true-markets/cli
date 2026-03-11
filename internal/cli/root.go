@@ -1,4 +1,4 @@
-// Package cli implements the command-line interface for the external DeFi CLI.
+// Package cli implements the command-line interface for the True Markets CLI.
 package cli
 
 import (
@@ -82,8 +82,8 @@ func Execute() int {
 
 func newRootCmd() *cobra.Command {
 	rootCmd := &cobra.Command{
-		Use:           "defi",
-		Short:         "True Markets DeFi CLI",
+		Use:           "tm",
+		Short:         "True Markets CLI",
 		Version:       versionString(),
 		SilenceErrors: true,
 		PersistentPreRunE: func(cmd *cobra.Command, _ []string) error {
@@ -92,7 +92,7 @@ func newRootCmd() *cobra.Command {
 		},
 	}
 
-	rootCmd.SetVersionTemplate("defi " + versionString() + "\n")
+	rootCmd.SetVersionTemplate("tm " + versionString() + "\n")
 
 	rootCmd.PersistentFlags().StringP("output", "o", "table", "Output format (json|table)")
 
