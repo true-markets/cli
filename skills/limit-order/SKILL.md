@@ -70,9 +70,9 @@ while true; do
     continue
   fi
 
-  QTY=$(echo "$QUOTE" | jq -r '.qty')
-  QTY_OUT=$(echo "$QUOTE" | jq -r '.qty_out')
-  ISSUES=$(echo "$QUOTE" | jq '.issues | length')
+  QTY=$(jq -r '.qty' <<< "$QUOTE")
+  QTY_OUT=$(jq -r '.qty_out' <<< "$QUOTE")
+  ISSUES=$(jq '.issues | length' <<< "$QUOTE")
 
   if [ "$SIDE" = "buy" ]; then
     PRICE=$(echo "$QTY $QTY_OUT" | awk '{printf "%.6f", $1 / $2}')
