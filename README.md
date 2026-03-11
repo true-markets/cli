@@ -8,9 +8,15 @@ Trade crypto from your terminal. Designed for human and agent traders.
 
 ## Install
 
-Requires [Go](https://go.dev/doc/install) 1.25+.
+#### Option 1: Homebrew (macOS / Linux)
 
-#### Option 1: Latest release
+```bash
+brew install true-markets/tap/tm
+```
+
+#### Option 2: Go install
+
+Requires [Go](https://go.dev/doc/install) 1.25+.
 
 ```bash
 go install github.com/true-markets/cli/cmd/tm@latest
@@ -22,7 +28,7 @@ Make sure your Go bin directory is in your PATH:
 export PATH="$HOME/go/bin:$PATH"
 ```
 
-#### Option 2: From source
+#### Option 3: From source
 
 ```bash
 git clone https://github.com/true-markets/cli.git

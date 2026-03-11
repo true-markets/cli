@@ -1,5 +1,7 @@
 version: 2
 
+project_name: tm
+
 builds:
   - id: tm
     main: ./cmd/tm
@@ -54,3 +56,16 @@ changelog:
       - "^docs:"
       - "^chore:"
       - "^ci:"
+
+brews:
+  - name: tm
+    repository:
+      owner: true-markets
+      name: homebrew-tap
+      token: "{{ .Env.HOMEBREW_TAP_TOKEN }}"
+    directory: Formula
+    homepage: "https://github.com/true-markets/cli"
+    description: "Trade crypto from your terminal"
+    license: "MIT"
+    test: |
+      system "#{bin}/tm", "--version"
