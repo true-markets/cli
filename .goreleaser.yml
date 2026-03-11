@@ -2,9 +2,6 @@ version: 2
 
 project_name: tm
 
-release:
-  mode: replace
-
 builds:
   - id: tm
     main: ./cmd/tm
@@ -68,5 +65,7 @@ homebrew_casks:
       owner: true-markets
       name: homebrew-tap
       token: "{{ .Env.HOMEBREW_TAP_TOKEN }}"
+      pull_request:
+        enabled: true
     homepage: "https://github.com/true-markets/cli"
     description: "Trade crypto from your terminal"
