@@ -73,13 +73,14 @@ tm balances
 
 Requires [Node.js](https://nodejs.org/) 18+.
 
-Install the DeFi skill so your agent knows how to use the CLI. Uses Vercel's [skills](https://github.com/vercel-labs/skills) tool.
+Install skills so your agent knows how to use the CLI. Uses Vercel's [skills](https://github.com/vercel-labs/skills) tool.
 
 ```bash
-npx skills add true-markets/cli
+npx skills add true-markets/cli/skills/truemarkets
+npx skills add true-markets/cli/skills/limit-order
 ```
 
-Works with Claude Code, Codex, Cursor, OpenCode, and other agents that support skills. Once installed, ask your agent to check your balances, buy tokens, or transfer funds.
+Works with Claude Code, Codex, Cursor, OpenCode, and other agents that support skills. Once installed, ask your agent to check your balances, buy tokens, place limit orders, or transfer funds.
 
 ## License
 
