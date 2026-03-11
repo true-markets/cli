@@ -1,5 +1,5 @@
 ---
-name: defi
+name: truemarkets
 description: Buy tokens, sell tokens, check balances, transfer crypto, DeFi trading, portfolio, swap
 allowed-tools:
   - Bash(tm *)
