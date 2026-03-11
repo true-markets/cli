@@ -2,6 +2,9 @@ version: 2
 
 project_name: tm
 
+release:
+  mode: replace
+
 builds:
   - id: tm
     main: ./cmd/tm
@@ -40,10 +43,12 @@ builds:
         goarch: arm64
 
 archives:
-  - format: tar.gz
+  - formats:
+      - tar.gz
     format_overrides:
       - goos: windows
-        format: zip
+        formats:
+          - zip
     name_template: "{{ .ProjectName }}_{{ .Version }}_{{ .Os }}_{{ .Arch }}"
 
 checksum:
@@ -57,15 +62,11 @@ changelog:
       - "^chore:"
       - "^ci:"
 
-brews:
+homebrew_casks:
   - name: tm
     repository:
       owner: true-markets
       name: homebrew-tap
       token: "{{ .Env.HOMEBREW_TAP_TOKEN }}"
-    directory: Formula
     homepage: "https://github.com/true-markets/cli"
     description: "Trade crypto from your terminal"
-    license: "MIT"
-    test: |
-      system "#{bin}/tm", "--version"
