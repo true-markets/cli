@@ -3,8 +3,7 @@ version: 2
 project_name: tm
 
 builds:
-  - id: tm
-    main: ./cmd/tm
+  - main: ./cmd/tm
     binary: tm
     env:
       - CGO_ENABLED=0
@@ -21,29 +20,13 @@ builds:
       - goos: windows
         goarch: arm64
 
-  - id: truemarkets
-    main: ./cmd/truemarkets
-    binary: truemarkets
-    env:
-      - CGO_ENABLED=0
-    ldflags:
-      - -s -w -X github.com/true-markets/cli/internal/cli.Version={{.Version}} -X github.com/true-markets/cli/internal/cli.CommitSHA={{.ShortCommit}}
-    goos:
-      - darwin
-      - linux
-      - windows
-    goarch:
-      - amd64
-      - arm64
-    ignore:
-      - goos: windows
-        goarch: arm64
-
 archives:
-  - format: tar.gz
+  - formats:
+      - tar.gz
     format_overrides:
       - goos: windows
-        format: zip
+        formats:
+          - zip
     name_template: "{{ .ProjectName }}_{{ .Version }}_{{ .Os }}_{{ .Arch }}"
 
 checksum:
@@ -57,15 +40,13 @@ changelog:
       - "^chore:"
       - "^ci:"
 
-brews:
+homebrew_casks:
   - name: tm
     repository:
       owner: true-markets
       name: homebrew-tap
       token: "{{ .Env.HOMEBREW_TAP_TOKEN }}"
-    directory: Formula
+      pull_request:
+        enabled: true
     homepage: "https://github.com/true-markets/cli"
     description: "Trade crypto from your terminal"
-    license: "MIT"
-    test: |
-      system "#{bin}/tm", "--version"
