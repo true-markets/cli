@@ -11,15 +11,15 @@ const (
 	keysFilePerm = 0o600
 )
 
-// KeyStore manages per-user API key files under ~/.config/defi/keys/.
+// KeyStore manages per-user API key files under ~/.config/truemarkets/keys/.
 type KeyStore struct {
 	dir string
 }
 
-// NewKeyStore returns a KeyStore backed by ~/.config/defi/keys/.
+// NewKeyStore returns a KeyStore backed by ~/.config/truemarkets/keys/.
 func NewKeyStore() *KeyStore {
 	homeDir, _ := os.UserHomeDir()
-	dir := filepath.Join(homeDir, ".config", "defi", "keys")
+	dir := filepath.Join(homeDir, ".config", "truemarkets", "keys")
 	_ = os.MkdirAll(dir, keysDirPerm)
 	return &KeyStore{dir: dir}
 }

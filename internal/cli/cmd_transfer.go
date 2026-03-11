@@ -10,8 +10,8 @@ import (
 
 	"github.com/spf13/cobra"
 
-	"github.com/true-markets/defi-cli/internal/cli/output"
-	"github.com/true-markets/defi-cli/pkg/client"
+	"github.com/true-markets/cli/internal/cli/output"
+	"github.com/true-markets/cli/pkg/client"
 )
 
 const (
@@ -48,7 +48,7 @@ func executeTransferFlow(cmd *cobra.Command, to, token, amount string) error {
 	ctx = cmd.Context() // re-read in case requireAuth updated it
 
 	if apiKey == "" {
-		return &CLIError{Code: ExitAuth, Message: "api key required - run 'defi config set api_key <key>'"}
+		return &CLIError{Code: ExitAuth, Message: "api key required - run 'tm config set api_key <key>'"}
 	}
 
 	cli, err := newAPIClient(host, authToken)

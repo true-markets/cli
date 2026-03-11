@@ -8,7 +8,7 @@ import (
 
 	"github.com/spf13/cobra"
 
-	"github.com/true-markets/defi-cli/internal/cli/output"
+	"github.com/true-markets/cli/internal/cli/output"
 )
 
 const (
@@ -85,7 +85,7 @@ func newConfigSetCmd() *cobra.Command {
 				fmt.Println("Set api_key")
 			default:
 				return fmt.Errorf(
-					"unknown config key: %s\nRun 'defi config set --help' for available keys",
+					"unknown config key: %s\nRun 'tm config set --help' for available keys",
 					key,
 				)
 			}
@@ -98,10 +98,10 @@ func newConfigSetCmd() *cobra.Command {
 func currentUserEmail() (string, error) {
 	tokens, err := NewTokenManager().LoadTokens()
 	if err != nil {
-		return "", errors.New("not logged in — run 'defi login' or 'defi signup' first")
+		return "", errors.New("not logged in — run 'tm login' or 'tm signup' first")
 	}
 	if tokens.Email == "" {
-		return "", errors.New("no email in stored credentials — run 'defi login' or 'defi signup'")
+		return "", errors.New("no email in stored credentials — run 'tm login' or 'tm signup'")
 	}
 	return tokens.Email, nil
 }

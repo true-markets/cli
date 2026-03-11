@@ -31,10 +31,10 @@ type TokenManager struct {
 	tokenFile string
 }
 
-// NewTokenManager creates a new token manager using ~/.config/defi/credentials.json.
+// NewTokenManager creates a new token manager using ~/.config/truemarkets/credentials.json.
 func NewTokenManager() *TokenManager {
 	homeDir, _ := os.UserHomeDir()
-	tokenDir := filepath.Join(homeDir, ".config", "defi")
+	tokenDir := filepath.Join(homeDir, ".config", "truemarkets")
 	_ = os.MkdirAll(tokenDir, tokenDirPerm)
 
 	return &TokenManager{
@@ -115,7 +115,7 @@ func (tm *TokenManager) refreshTokens(
 		return nil, fmt.Errorf("create refresh request: %w", err)
 	}
 	req.Header.Set("Content-Type", "application/json")
-	req.Header.Set("User-Agent", "defi/"+Version)
+	req.Header.Set("User-Agent", "tm/"+Version)
 
 	resp, err := http.DefaultClient.Do(req)
 	if err != nil {

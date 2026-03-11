@@ -15,7 +15,7 @@ import (
 	"github.com/spf13/cobra"
 	"github.com/tkhq/go-sdk/pkg/apikey"
 
-	"github.com/true-markets/defi-cli/pkg/client"
+	"github.com/true-markets/cli/pkg/client"
 )
 
 func newSignupCmd() *cobra.Command {

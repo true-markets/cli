@@ -67,7 +67,7 @@ func requireAuth(cmd *cobra.Command) (string, error) {
 
 	return "", &CLIError{
 		Code:    ExitAuth,
-		Message: `not logged in. Run "defi login" to authenticate.`,
+		Message: `not logged in. Run "tm login" to authenticate.`,
 	}
 }
 

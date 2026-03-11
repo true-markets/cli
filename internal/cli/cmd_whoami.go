@@ -7,8 +7,8 @@ import (
 
 	"github.com/spf13/cobra"
 
-	"github.com/true-markets/defi-cli/internal/cli/output"
-	"github.com/true-markets/defi-cli/pkg/client"
+	"github.com/true-markets/cli/internal/cli/output"
+	"github.com/true-markets/cli/pkg/client"
 )
 
 func newWhoamiCmd() *cobra.Command {

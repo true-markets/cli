@@ -2,7 +2,7 @@
 name: limit-order
 description: Place a limit order that polls quotes and executes at a target price
 allowed-tools:
-  - Bash(defi *)
+  - Bash(tm *)
 license: MIT
 ---
 
@@ -12,8 +12,8 @@ Place a limit order by polling quotes in a loop and executing when the price rea
 
 ## Prerequisites
 
-1. CLI installed: `go install github.com/true-markets/defi-cli/cmd/defi@latest`
-2. Signed up: `defi signup user@email.com` (creates account, wallet, and API key in one step)
+1. CLI installed: `go install github.com/true-markets/cli/cmd/tm@latest`
+2. Signed up: `tm signup user@email.com` (creates account, wallet, and API key in one step)
 
 ## Gather Parameters
 
@@ -31,7 +31,7 @@ If any required parameter is missing, ask with AskUserQuestion.
 Run a dry-run to show the current market price:
 
 ```bash
-defi <side> <token> <amount> -o json --dry-run
+tm <side> <token> <amount> -o json --dry-run
 ```
 
 Parse the JSON output. Compute the current effective price:
@@ -63,7 +63,7 @@ echo "Polling every ${INTERVAL}s. Press Ctrl+C to cancel."
 echo ""
 
 while true; do
-  QUOTE=$(defi $SIDE $TOKEN $AMOUNT -o json --dry-run 2>/dev/null)
+  QUOTE=$(tm $SIDE $TOKEN $AMOUNT -o json --dry-run 2>/dev/null)
   if [ $? -ne 0 ]; then
     echo "[$(date '+%H:%M:%S')] Quote failed, retrying..."
     sleep $INTERVAL
@@ -94,7 +94,7 @@ while true; do
     fi
     echo ""
     echo "Target price reached! Executing trade..."
-    RESULT=$(defi $SIDE $TOKEN $AMOUNT -o json --force 2>&1)
+    RESULT=$(tm $SIDE $TOKEN $AMOUNT -o json --force 2>&1)
     echo "$RESULT"
     echo ""
     echo "Limit order complete."

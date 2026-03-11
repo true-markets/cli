@@ -7,7 +7,7 @@ import (
 
 	"github.com/tkhq/go-sdk/pkg/apikey"
 
-	"github.com/true-markets/defi-cli/pkg/client"
+	"github.com/true-markets/cli/pkg/client"
 )
 
 // signPayload signs a payload with an API key and returns the signature.

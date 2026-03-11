@@ -14,7 +14,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"github.com/true-markets/defi-cli/pkg/client"
+	"github.com/true-markets/cli/pkg/client"
 )
 
 const (

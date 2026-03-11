@@ -1,4 +1,4 @@
-# True Markets DeFi CLI
+# True Markets CLI
 
 Trade crypto from your terminal. Designed for human and agent traders.
 
@@ -13,7 +13,7 @@ Requires [Go](https://go.dev/doc/install) 1.25+.
 #### Option 1: Latest release
 
 ```bash
-go install github.com/true-markets/defi-cli/cmd/defi@latest
+go install github.com/true-markets/cli/cmd/tm@latest
 ```
 
 Make sure your Go bin directory is in your PATH:
@@ -25,38 +25,40 @@ export PATH="$HOME/go/bin:$PATH"
 #### Option 2: From source
 
 ```bash
-git clone https://github.com/true-markets/defi-cli.git
+git clone https://github.com/true-markets/cli.git
 ```
 
 ```bash
-cd defi-cli && make install
+cd cli && make install
 ```
 
 Confirm it's installed:
 
 ```bash
-defi --version
+tm --version
 ```
+
+Both `tm` and `truemarkets` work as binary names.
 
 ## Setup
 
 Create an account. Replace `<your-email>` with your email address. A verification code will be sent to it:
 
 ```bash
-defi signup <your-email>
+tm signup <your-email>
 ```
 
 Verify your email and wallet addresses:
 
 ```bash
-defi whoami
+tm whoami
 ```
 
-Returning users can log in with `defi login`.
+Returning users can log in with `tm login`.
 
 ### Fund your account
 
-To start trading, send funds to the wallet address shown by `defi whoami`:
+To start trading, send funds to the wallet address shown by `tm whoami`:
 
 - **Solana**: Send USDC on Solana to your Solana wallet address
 - **Base**: Send USDC on Base to your Base wallet address
@@ -64,7 +66,7 @@ To start trading, send funds to the wallet address shown by `defi whoami`:
 Check your balances:
 
 ```bash
-defi balances
+tm balances
 ```
 
 ## Use with AI agents
@@ -74,7 +76,7 @@ Requires [Node.js](https://nodejs.org/) 18+.
 Install the DeFi skill so your agent knows how to use the CLI. Uses Vercel's [skills](https://github.com/vercel-labs/skills) tool.
 
 ```bash
-npx skills add true-markets/defi-cli
+npx skills add true-markets/cli
 ```
 
 Works with Claude Code, Codex, Cursor, OpenCode, and other agents that support skills. Once installed, ask your agent to check your balances, buy tokens, or transfer funds.
