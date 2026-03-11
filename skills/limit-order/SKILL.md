@@ -70,18 +70,16 @@ while true; do
     continue
   fi
 
-  QTY=$(echo "$QUOTE" | python3 -c "import sys,json; print(json.load(sys.stdin)['qty'])")
-  QTY_OUT=$(echo "$QUOTE" | python3 -c "import sys,json; print(json.load(sys.stdin)['qty_out'])")
-  ISSUES=$(echo "$QUOTE" | python3 -c "import sys,json; print(len(json.load(sys.stdin).get('issues',[])))")
+  QTY=$(echo "$QUOTE" | jq -r '.qty')
+  QTY_OUT=$(echo "$QUOTE" | jq -r '.qty_out')
+  ISSUES=$(echo "$QUOTE" | jq '.issues | length')
 
   if [ "$SIDE" = "buy" ]; then
-    PRICE=$(python3 -c "print(f'{float(\"$QTY\") / float(\"$QTY_OUT\"):.6f}')")
-    # Buy limit: execute when market price <= target (price dropped enough)
-    HIT=$(python3 -c "print('yes' if float(\"$PRICE\") <= float(\"$TARGET\") else 'no')")
+    PRICE=$(echo "$QTY $QTY_OUT" | awk '{printf "%.6f", $1 / $2}')
+    HIT=$(echo "$PRICE $TARGET" | awk '{print ($1 <= $2) ? "yes" : "no"}')
   else
-    PRICE=$(python3 -c "print(f'{float(\"$QTY_OUT\") / float(\"$QTY\"):.6f}')")
-    # Sell limit: execute when market price >= target (price rose enough)
-    HIT=$(python3 -c "print('yes' if float(\"$PRICE\") >= float(\"$TARGET\") else 'no')")
+    PRICE=$(echo "$QTY_OUT $QTY" | awk '{printf "%.6f", $1 / $2}')
+    HIT=$(echo "$PRICE $TARGET" | awk '{print ($1 >= $2) ? "yes" : "no"}')
   fi
 
   echo "[$(date '+%H:%M:%S')] Price: \$$PRICE | Target: \$$TARGET | Hit: $HIT"
