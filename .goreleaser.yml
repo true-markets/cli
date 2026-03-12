@@ -43,8 +43,8 @@ changelog:
 homebrew_casks:
   - name: tm
     repository:
-      owner: true-markets
+      owner: richtrue
       name: homebrew-tap
       token: "{{ .Env.HOMEBREW_TAP_TOKEN }}"
-    homepage: "https://github.com/true-markets/cli"
+    homepage: "https://github.com/richtrue/cli"
     description: "Trade crypto from your terminal"
