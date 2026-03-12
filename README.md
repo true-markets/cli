@@ -88,6 +88,10 @@ npx skills add true-markets/cli/skills/limit-order
 
 Works with Claude Code, Codex, Cursor, OpenCode, and other agents that support skills. Once installed, ask your agent to check your balances, buy tokens, place limit orders, or transfer funds.
 
+## Support
+
+Email us at support@truemarkets.co
+
 ## License
 
 [MIT](LICENSE)
