@@ -23,9 +23,24 @@ jobs:
         with:
           go-version: "1.25"
 
+      - name: Get secrets from BWS
+        uses: bitwarden/sm-action@v2
+        with:
+          access_token: ${{ secrets.BWS_ACCESS_TOKEN }}
+          secrets: |
+            51bac961-e291-46f6-8ca9-b40a018038a9 > APP_PRIVATE_KEY
+
+      - uses: actions/create-github-app-token@v1
+        id: app-token
+        with:
+          app-id: ${{ vars.APP_ID }}
+          private-key: ${{ env.APP_PRIVATE_KEY }}
+          owner: true-markets
+          repositories: homebrew-tap
+
       - uses: goreleaser/goreleaser-action@v6
         with:
           args: release --clean
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          HOMEBREW_TAP_TOKEN: ${{ secrets.HOMEBREW_TAP_TOKEN }}
+          HOMEBREW_TAP_TOKEN: ${{ steps.app-token.outputs.token }}

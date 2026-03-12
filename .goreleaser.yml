@@ -46,7 +46,5 @@ homebrew_casks:
       owner: true-markets
       name: homebrew-tap
       token: "{{ .Env.HOMEBREW_TAP_TOKEN }}"
-      pull_request:
-        enabled: true
     homepage: "https://github.com/true-markets/cli"
     description: "Trade crypto from your terminal"
