@@ -30,7 +30,7 @@ jobs:
           secrets: |
             51bac961-e291-46f6-8ca9-b40a018038a9 > APP_PRIVATE_KEY
 
-      - uses: actions/create-github-app-token@v1
+      - uses: actions/create-github-app-token@v2
         id: app-token
         with:
           app-id: ${{ vars.APP_ID }}
