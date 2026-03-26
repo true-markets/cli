@@ -41,7 +41,7 @@ type priceOutput struct {
 func newPriceCmd() *cobra.Command {
 	return &cobra.Command{
 		Use:   "price <symbol>",
-		Short: "Get the current price of an asset",
+		Short: "Get the current price and 24h open, high, and low for an asset",
 		Args:  cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			ctx := cmd.Context()
