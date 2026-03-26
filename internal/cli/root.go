@@ -106,6 +106,7 @@ func newRootCmd() *cobra.Command {
 	rootCmd.AddCommand(newBuyCmd())
 	rootCmd.AddCommand(newSellCmd())
 	rootCmd.AddCommand(newTransferCmd())
+	rootCmd.AddCommand(newPriceCmd())
 
 	return rootCmd
 }
