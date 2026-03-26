@@ -66,6 +66,27 @@ Example output:
 ]
 ```
 
+### Check asset price
+
+```bash
+tm price SOL -o json
+tm price BTC -o json
+```
+
+Returns current price and 24-hour open, high, and low. No authentication required.
+
+Example output:
+
+```json
+{
+  "symbol": "SOL",
+  "price": "86.51",
+  "open_24h": "91.21",
+  "high_24h": "91.94",
+  "low_24h": "85.40"
+}
+```
+
 ### Show balances
 
 ```bash
