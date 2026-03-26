@@ -53,17 +53,48 @@ tm assets --chain solana -o json
 tm assets --chain base -o json
 ```
 
-| Flag | Default | Description |
-|------|---------|-------------|
-| `--chain` | *(all)* | Filter by chain (`solana` or `base`) |
+| Flag      | Default | Description                          |
+| --------- | ------- | ------------------------------------ |
+| `--chain` | _(all)_ | Filter by chain (`solana` or `base`) |
 
 Example output:
 
 ```json
 [
-  { "name": "Solana", "symbol": "SOL", "chain": "solana", "address": "So11...112" },
-  { "name": "USD Coin", "symbol": "USDC", "chain": "solana", "address": "EPjF...t1v" }
+  {
+    "name": "Solana",
+    "symbol": "SOL",
+    "chain": "solana",
+    "address": "So11...112"
+  },
+  {
+    "name": "USD Coin",
+    "symbol": "USDC",
+    "chain": "solana",
+    "address": "EPjF...t1v"
+  }
 ]
+```
+
+### Check asset price
+
+```bash
+tm price SOL -o json
+tm price BTC -o json
+```
+
+Returns current price and 24-hour open, high, and low. No authentication required.
+
+Example output:
+
+```json
+{
+  "symbol": "SOL",
+  "price": "86.51",
+  "open_24h": "91.21",
+  "high_24h": "91.94",
+  "low_24h": "85.40"
+}
 ```
 
 ### Show balances
@@ -74,10 +105,10 @@ tm balances --chain solana -o json
 tm balances --detailed -o json
 ```
 
-| Flag | Default | Description |
-|------|---------|-------------|
-| `--chain` | *(all)* | Filter by chain (`solana` or `base`) |
-| `--detailed` | `false` | Include token address and decimals |
+| Flag         | Default | Description                          |
+| ------------ | ------- | ------------------------------------ |
+| `--chain`    | _(all)_ | Filter by chain (`solana` or `base`) |
+| `--detailed` | `false` | Include token address and decimals   |
 
 Example output:
 
@@ -85,7 +116,12 @@ Example output:
 {
   "balances": [
     { "name": "Solana", "symbol": "SOL", "chain": "solana", "balance": "1.5" },
-    { "name": "USD Coin", "symbol": "USDC", "chain": "solana", "balance": "100.00" }
+    {
+      "name": "USD Coin",
+      "symbol": "USDC",
+      "chain": "solana",
+      "balance": "100.00"
+    }
   ]
 }
 ```
@@ -100,11 +136,11 @@ tm buy SOL 50 -o json --dry-run
 tm buy SOL 1.5 --qty-unit base -o json --dry-run
 ```
 
-| Flag | Default | Description |
-|------|---------|-------------|
-| `--chain` | `solana` | Blockchain network (`solana` or `base`) |
-| `--qty-unit` | `quote` | Quantity unit (`base` = token amount, `quote` = USDC amount) |
-| `--dry-run` | `false` | Print quote without executing |
+| Flag         | Default  | Description                                                  |
+| ------------ | -------- | ------------------------------------------------------------ |
+| `--chain`    | `solana` | Blockchain network (`solana` or `base`)                      |
+| `--qty-unit` | `quote`  | Quantity unit (`base` = token amount, `quote` = USDC amount) |
+| `--dry-run`  | `false`  | Print quote without executing                                |
 
 Dry-run output includes `"executed": false`. Live execution returns order ID and transaction hash.
 
@@ -118,11 +154,11 @@ tm sell SOL 1.5 -o json --dry-run
 tm sell SOL 50 --qty-unit quote -o json --dry-run
 ```
 
-| Flag | Default | Description |
-|------|---------|-------------|
-| `--chain` | `solana` | Blockchain network (`solana` or `base`) |
-| `--qty-unit` | `base` | Quantity unit (`base` = token amount, `quote` = USDC amount) |
-| `--dry-run` | `false` | Print quote without executing |
+| Flag         | Default  | Description                                                  |
+| ------------ | -------- | ------------------------------------------------------------ |
+| `--chain`    | `solana` | Blockchain network (`solana` or `base`)                      |
+| `--qty-unit` | `base`   | Quantity unit (`base` = token amount, `quote` = USDC amount) |
+| `--dry-run`  | `false`  | Print quote without executing                                |
 
 ### Transfer tokens
 
@@ -134,12 +170,12 @@ tm transfer <address> SOL 1.5 -o json --dry-run
 tm transfer <address> SOL 1.5 -o json --force
 ```
 
-| Flag | Default | Description |
-|------|---------|-------------|
-| `--chain` | `solana` | Blockchain network (`solana` or `base`) |
-| `--qty-unit` | `base` | Quantity unit (`base` = token amount, `quote` = USDC amount) |
-| `--dry-run` | `false` | Print transfer details without executing |
-| `--force` | `false` | Execute without confirmation (required for JSON mode) |
+| Flag         | Default  | Description                                                  |
+| ------------ | -------- | ------------------------------------------------------------ |
+| `--chain`    | `solana` | Blockchain network (`solana` or `base`)                      |
+| `--qty-unit` | `base`   | Quantity unit (`base` = token amount, `quote` = USDC amount) |
+| `--dry-run`  | `false`  | Print transfer details without executing                     |
+| `--force`    | `false`  | Execute without confirmation (required for JSON mode)        |
 
 ### Configuration
 
@@ -162,11 +198,11 @@ All errors return a non-zero exit code and (with `-o json`) a JSON body:
 }
 ```
 
-| Exit code | Name | Meaning |
-|-----------|------|---------|
-| 0 | success | Command succeeded |
-| 1 | general | Unexpected error |
-| 2 | usage | Invalid arguments or flags |
-| 3 | auth | Authentication failed or missing |
-| 4 | api | API returned an error |
-| 5 | network | Network request failed |
+| Exit code | Name    | Meaning                          |
+| --------- | ------- | -------------------------------- |
+| 0         | success | Command succeeded                |
+| 1         | general | Unexpected error                 |
+| 2         | usage   | Invalid arguments or flags       |
+| 3         | auth    | Authentication failed or missing |
+| 4         | api     | API returned an error            |
+| 5         | network | Network request failed           |
