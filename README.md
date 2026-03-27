@@ -39,6 +39,12 @@ git clone https://github.com/true-markets/cli.git
 cd cli && make install
 ```
 
+Confirm it's installed:
+
+```bash
+tm --version
+```
+
 ## Setup
 
 Create an account. Replace `<your-email>` with your email address. A verification code will be sent to it:
