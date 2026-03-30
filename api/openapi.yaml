@@ -376,6 +376,64 @@ paths:
                 properties:
                   message:
                     type: string
+  /v1/defi/core/onramp:
+    post:
+      operationId: createOnramp
+      summary: Create a fiat onramp session
+      description: Returns a time-limited Coinbase onramp URL for depositing fiat into the user's USDC wallet.
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: "#/components/parameters/version"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/OnrampRequest"
+      responses:
+        "200":
+          description: Onramp URL generated successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/OnrampResponse"
+        "400":
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+        "422":
+          description: Invalid request payload
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+        "500":
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
   /v1/defi/core/assets:
     get:
       operationId: getAssets
@@ -736,6 +794,29 @@ components:
           $ref: "#/components/schemas/AssetMarketData"
         socials:
           $ref: "#/components/schemas/AssetSocials"
+    OnrampRequest:
+      type: object
+      required:
+        - chain
+        - amount
+        - payment_method
+      properties:
+        chain:
+          type: string
+          description: Blockchain chain (e.g. solana)
+        amount:
+          type: string
+          description: Fiat amount in USD to onramp
+        payment_method:
+          type: string
+          enum: [CARD]
+          description: Payment method for the onramp
+    OnrampResponse:
+      type: object
+      properties:
+        url:
+          type: string
+          description: Time-limited Coinbase onramp URL with embedded session token
     CreateWalletRequest:
       type: object
       required:
