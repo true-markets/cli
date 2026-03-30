@@ -201,7 +201,7 @@ type OnrampRequestPaymentMethod string
 
 // OnrampResponse defines model for OnrampResponse.
 type OnrampResponse struct {
-	// Url Time-limited Coinbase onramp URL with embedded session token
+	// Url Time-limited onramp URL with embedded session token
 	Url *string `json:"url,omitempty"`
 }
 

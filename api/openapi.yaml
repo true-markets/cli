@@ -380,7 +380,7 @@ paths:
     post:
       operationId: createOnramp
       summary: Create a fiat onramp session
-      description: Returns a time-limited Coinbase onramp URL for depositing fiat into the user's USDC wallet.
+      description: Returns a time-limited onramp URL for depositing fiat into the user's USDC wallet.
       security:
         - bearerAuth: []
       parameters:
@@ -816,7 +816,7 @@ components:
       properties:
         url:
           type: string
-          description: Time-limited Coinbase onramp URL with embedded session token
+          description: Time-limited onramp URL with embedded session token
     CreateWalletRequest:
       type: object
       required:

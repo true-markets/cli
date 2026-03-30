@@ -16,8 +16,8 @@ import (
 func newOnrampCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "onramp <amount>",
-		Short: "Get a Coinbase onramp URL to deposit USD into your USDC wallet",
-		Long:  "Generates a time-limited Coinbase onramp URL pre-filled with the given dollar amount, targeted at your Solana USDC wallet. The URL expires in 5 minutes.",
+		Short: "Get an onramp URL to deposit USD into your USDC wallet",
+		Long:  "Generates a time-limited onramp URL pre-filled with the given dollar amount, targeted at your Solana USDC wallet. The URL expires in 5 minutes.",
 		Args:  cobra.ExactArgs(1),
 		RunE:  runOnramp,
 	}

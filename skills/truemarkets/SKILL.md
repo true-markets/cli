@@ -180,24 +180,24 @@ tm transfer <address> SOL 1.5 -o json --force
 ### Onramp (deposit USD → USDC)
 
 ```bash
-# Get a Coinbase onramp URL for $50
+# Get an onramp URL for $50
 tm onramp 50 -o json
 
 # Open the URL in your browser automatically
 tm onramp 50 --open
 ```
 
-Returns a time-limited URL (expires in 5 minutes) to deposit USD into your Solana USDC wallet via Coinbase.
+Returns a time-limited URL (expires in 5 minutes) to deposit USD into your Solana USDC wallet.
 
-| Flag     | Default | Description                              |
-| -------- | ------- | ---------------------------------------- |
+| Flag     | Default | Description                                |
+| -------- | ------- | ------------------------------------------ |
 | `--open` | `false` | Open the onramp URL in the default browser |
 
 Example output:
 
 ```json
 {
-  "url": "https://pay.coinbase.com/...",
+  "url": "https://...",
   "amount": "50"
 }
 ```
