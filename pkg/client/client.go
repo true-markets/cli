@@ -21,6 +21,21 @@ const (
 	BearerAuthScopes = "bearerAuth.Scopes"
 )
 
+// Defines values for OnrampRequestPaymentMethod.
+const (
+	CARD OnrampRequestPaymentMethod = "CARD"
+)
+
+// Valid indicates whether the value is a known member of the OnrampRequestPaymentMethod enum.
+func (e OnrampRequestPaymentMethod) Valid() bool {
+	switch e {
+	case CARD:
+		return true
+	default:
+		return false
+	}
+}
+
 // Defines values for QuoteRequestOrderSide.
 const (
 	Buy  QuoteRequestOrderSide = "buy"
@@ -167,6 +182,27 @@ type CreatedWallet struct {
 	AddressType     *string `json:"address_type,omitempty"`
 	WalletAccountId *string `json:"wallet_account_id,omitempty"`
 	WalletId        *string `json:"wallet_id,omitempty"`
+}
+
+// OnrampRequest defines model for OnrampRequest.
+type OnrampRequest struct {
+	// Amount Fiat amount in USD to onramp
+	Amount string `json:"amount"`
+
+	// Chain Blockchain chain (e.g. solana)
+	Chain string `json:"chain"`
+
+	// PaymentMethod Payment method for the onramp
+	PaymentMethod OnrampRequestPaymentMethod `json:"payment_method"`
+}
+
+// OnrampRequestPaymentMethod Payment method for the onramp
+type OnrampRequestPaymentMethod string
+
+// OnrampResponse defines model for OnrampResponse.
+type OnrampResponse struct {
+	// Url Time-limited Coinbase onramp URL with embedded session token
+	Url *string `json:"url,omitempty"`
 }
 
 // ProfileResponse defines model for ProfileResponse.
@@ -332,6 +368,12 @@ type CreateWalletParams struct {
 	Version *Version `form:"version,omitempty" json:"version,omitempty"`
 }
 
+// CreateOnrampParams defines parameters for CreateOnramp.
+type CreateOnrampParams struct {
+	// Version API version date (YYYY-MM-DD)
+	Version *Version `form:"version,omitempty" json:"version,omitempty"`
+}
+
 // GetProfileParams defines parameters for GetProfile.
 type GetProfileParams struct {
 	// Version API version date (YYYY-MM-DD)
@@ -364,6 +406,9 @@ type PrepareTransferParams struct {
 
 // CreateWalletJSONRequestBody defines body for CreateWallet for application/json ContentType.
 type CreateWalletJSONRequestBody = CreateWalletRequest
+
+// CreateOnrampJSONRequestBody defines body for CreateOnramp for application/json ContentType.
+type CreateOnrampJSONRequestBody = OnrampRequest
 
 // CreateQuoteJSONRequestBody defines body for CreateQuote for application/json ContentType.
 type CreateQuoteJSONRequestBody = QuoteRequest
@@ -461,6 +506,11 @@ type ClientInterface interface {
 
 	CreateWallet(ctx context.Context, params *CreateWalletParams, body CreateWalletJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
 
+	// CreateOnrampWithBody request with any body
+	CreateOnrampWithBody(ctx context.Context, params *CreateOnrampParams, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	CreateOnramp(ctx context.Context, params *CreateOnrampParams, body CreateOnrampJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
+
 	// GetProfile request
 	GetProfile(ctx context.Context, params *GetProfileParams, reqEditors ...RequestEditorFn) (*http.Response, error)
 
@@ -523,6 +573,30 @@ func (c *Client) CreateWalletWithBody(ctx context.Context, params *CreateWalletP
 
 func (c *Client) CreateWallet(ctx context.Context, params *CreateWalletParams, body CreateWalletJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	req, err := NewCreateWalletRequest(c.Server, params, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) CreateOnrampWithBody(ctx context.Context, params *CreateOnrampParams, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewCreateOnrampRequestWithBody(c.Server, params, contentType, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) CreateOnramp(ctx context.Context, params *CreateOnrampParams, body CreateOnrampJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewCreateOnrampRequest(c.Server, params, body)
 	if err != nil {
 		return nil, err
 	}
@@ -792,6 +866,68 @@ func NewCreateWalletRequestWithBody(server string, params *CreateWalletParams, c
 	}
 
 	operationPath := fmt.Sprintf("/v1/defi/core/create-wallet")
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	if params != nil {
+		queryValues := queryURL.Query()
+
+		if params.Version != nil {
+
+			if queryFrag, err := runtime.StyleParamWithOptions("form", true, "version", *params.Version, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationQuery, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
+				return nil, err
+			} else {
+				for k, v := range parsed {
+					for _, v2 := range v {
+						queryValues.Add(k, v2)
+					}
+				}
+			}
+
+		}
+
+		queryURL.RawQuery = queryValues.Encode()
+	}
+
+	req, err := http.NewRequest("POST", queryURL.String(), body)
+	if err != nil {
+		return nil, err
+	}
+
+	req.Header.Add("Content-Type", contentType)
+
+	return req, nil
+}
+
+// NewCreateOnrampRequest calls the generic CreateOnramp builder with application/json body
+func NewCreateOnrampRequest(server string, params *CreateOnrampParams, body CreateOnrampJSONRequestBody) (*http.Request, error) {
+	var bodyReader io.Reader
+	buf, err := json.Marshal(body)
+	if err != nil {
+		return nil, err
+	}
+	bodyReader = bytes.NewReader(buf)
+	return NewCreateOnrampRequestWithBody(server, params, "application/json", bodyReader)
+}
+
+// NewCreateOnrampRequestWithBody generates requests for CreateOnramp with any type of body
+func NewCreateOnrampRequestWithBody(server string, params *CreateOnrampParams, contentType string, body io.Reader) (*http.Request, error) {
+	var err error
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/v1/defi/core/onramp")
 	if operationPath[0] == '/' {
 		operationPath = "." + operationPath
 	}
@@ -1184,6 +1320,11 @@ type ClientWithResponsesInterface interface {
 
 	CreateWalletWithResponse(ctx context.Context, params *CreateWalletParams, body CreateWalletJSONRequestBody, reqEditors ...RequestEditorFn) (*CreateWalletResponse, error)
 
+	// CreateOnrampWithBodyWithResponse request with any body
+	CreateOnrampWithBodyWithResponse(ctx context.Context, params *CreateOnrampParams, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*CreateOnrampResponse, error)
+
+	CreateOnrampWithResponse(ctx context.Context, params *CreateOnrampParams, body CreateOnrampJSONRequestBody, reqEditors ...RequestEditorFn) (*CreateOnrampResponse, error)
+
 	// GetProfileWithResponse request
 	GetProfileWithResponse(ctx context.Context, params *GetProfileParams, reqEditors ...RequestEditorFn) (*GetProfileResponse, error)
 
@@ -1286,6 +1427,40 @@ func (r CreateWalletResponse) Status() string {
 
 // StatusCode returns HTTPResponse.StatusCode
 func (r CreateWalletResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+type CreateOnrampResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	JSON200      *OnrampResponse
+	JSON400      *struct {
+		Message *string `json:"message,omitempty"`
+	}
+	JSON401 *struct {
+		Message *string `json:"message,omitempty"`
+	}
+	JSON422 *struct {
+		Message *string `json:"message,omitempty"`
+	}
+	JSON500 *struct {
+		Message *string `json:"message,omitempty"`
+	}
+}
+
+// Status returns HTTPResponse.Status
+func (r CreateOnrampResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r CreateOnrampResponse) StatusCode() int {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.StatusCode
 	}
@@ -1497,6 +1672,23 @@ func (c *ClientWithResponses) CreateWalletWithResponse(ctx context.Context, para
 	return ParseCreateWalletResponse(rsp)
 }
 
+// CreateOnrampWithBodyWithResponse request with arbitrary body returning *CreateOnrampResponse
+func (c *ClientWithResponses) CreateOnrampWithBodyWithResponse(ctx context.Context, params *CreateOnrampParams, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*CreateOnrampResponse, error) {
+	rsp, err := c.CreateOnrampWithBody(ctx, params, contentType, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseCreateOnrampResponse(rsp)
+}
+
+func (c *ClientWithResponses) CreateOnrampWithResponse(ctx context.Context, params *CreateOnrampParams, body CreateOnrampJSONRequestBody, reqEditors ...RequestEditorFn) (*CreateOnrampResponse, error) {
+	rsp, err := c.CreateOnramp(ctx, params, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseCreateOnrampResponse(rsp)
+}
+
 // GetProfileWithResponse request returning *GetProfileResponse
 func (c *ClientWithResponses) GetProfileWithResponse(ctx context.Context, params *GetProfileParams, reqEditors ...RequestEditorFn) (*GetProfileResponse, error) {
 	rsp, err := c.GetProfile(ctx, params, reqEditors...)
@@ -1691,6 +1883,68 @@ func ParseCreateWalletResponse(rsp *http.Response) (*CreateWalletResponse, error
 			return nil, err
 		}
 		response.JSON401 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 500:
+		var dest struct {
+			Message *string `json:"message,omitempty"`
+		}
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON500 = &dest
+
+	}
+
+	return response, nil
+}
+
+// ParseCreateOnrampResponse parses an HTTP response from a CreateOnrampWithResponse call
+func ParseCreateOnrampResponse(rsp *http.Response) (*CreateOnrampResponse, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &CreateOnrampResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest OnrampResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 400:
+		var dest struct {
+			Message *string `json:"message,omitempty"`
+		}
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON400 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 401:
+		var dest struct {
+			Message *string `json:"message,omitempty"`
+		}
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON401 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 422:
+		var dest struct {
+			Message *string `json:"message,omitempty"`
+		}
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON422 = &dest
 
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 500:
 		var dest struct {

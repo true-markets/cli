@@ -1,6 +1,6 @@
 ---
 name: truemarkets
-description: Buy tokens, sell tokens, check balances, transfer crypto, DeFi trading, portfolio, swap
+description: Buy tokens, sell tokens, check balances, transfer crypto, onramp USD to USDC, deposit, DeFi trading, portfolio, swap
 allowed-tools:
   - Bash(tm *)
 license: MIT
@@ -53,16 +53,26 @@ tm assets --chain solana -o json
 tm assets --chain base -o json
 ```
 
-| Flag | Default | Description |
-|------|---------|-------------|
-| `--chain` | *(all)* | Filter by chain (`solana` or `base`) |
+| Flag      | Default | Description                          |
+| --------- | ------- | ------------------------------------ |
+| `--chain` | _(all)_ | Filter by chain (`solana` or `base`) |
 
 Example output:
 
 ```json
 [
-  { "name": "Solana", "symbol": "SOL", "chain": "solana", "address": "So11...112" },
-  { "name": "USD Coin", "symbol": "USDC", "chain": "solana", "address": "EPjF...t1v" }
+  {
+    "name": "Solana",
+    "symbol": "SOL",
+    "chain": "solana",
+    "address": "So11...112"
+  },
+  {
+    "name": "USD Coin",
+    "symbol": "USDC",
+    "chain": "solana",
+    "address": "EPjF...t1v"
+  }
 ]
 ```
 
@@ -95,10 +105,10 @@ tm balances --chain solana -o json
 tm balances --detailed -o json
 ```
 
-| Flag | Default | Description |
-|------|---------|-------------|
-| `--chain` | *(all)* | Filter by chain (`solana` or `base`) |
-| `--detailed` | `false` | Include token address and decimals |
+| Flag         | Default | Description                          |
+| ------------ | ------- | ------------------------------------ |
+| `--chain`    | _(all)_ | Filter by chain (`solana` or `base`) |
+| `--detailed` | `false` | Include token address and decimals   |
 
 Example output:
 
@@ -106,7 +116,12 @@ Example output:
 {
   "balances": [
     { "name": "Solana", "symbol": "SOL", "chain": "solana", "balance": "1.5" },
-    { "name": "USD Coin", "symbol": "USDC", "chain": "solana", "balance": "100.00" }
+    {
+      "name": "USD Coin",
+      "symbol": "USDC",
+      "chain": "solana",
+      "balance": "100.00"
+    }
   ]
 }
 ```
@@ -121,11 +136,11 @@ tm buy SOL 50 -o json --dry-run
 tm buy SOL 1.5 --qty-unit base -o json --dry-run
 ```
 
-| Flag | Default | Description |
-|------|---------|-------------|
-| `--chain` | `solana` | Blockchain network (`solana` or `base`) |
-| `--qty-unit` | `quote` | Quantity unit (`base` = token amount, `quote` = USDC amount) |
-| `--dry-run` | `false` | Print quote without executing |
+| Flag         | Default  | Description                                                  |
+| ------------ | -------- | ------------------------------------------------------------ |
+| `--chain`    | `solana` | Blockchain network (`solana` or `base`)                      |
+| `--qty-unit` | `quote`  | Quantity unit (`base` = token amount, `quote` = USDC amount) |
+| `--dry-run`  | `false`  | Print quote without executing                                |
 
 Dry-run output includes `"executed": false`. Live execution returns order ID and transaction hash.
 
@@ -139,11 +154,11 @@ tm sell SOL 1.5 -o json --dry-run
 tm sell SOL 50 --qty-unit quote -o json --dry-run
 ```
 
-| Flag | Default | Description |
-|------|---------|-------------|
-| `--chain` | `solana` | Blockchain network (`solana` or `base`) |
-| `--qty-unit` | `base` | Quantity unit (`base` = token amount, `quote` = USDC amount) |
-| `--dry-run` | `false` | Print quote without executing |
+| Flag         | Default  | Description                                                  |
+| ------------ | -------- | ------------------------------------------------------------ |
+| `--chain`    | `solana` | Blockchain network (`solana` or `base`)                      |
+| `--qty-unit` | `base`   | Quantity unit (`base` = token amount, `quote` = USDC amount) |
+| `--dry-run`  | `false`  | Print quote without executing                                |
 
 ### Transfer tokens
 
@@ -155,12 +170,39 @@ tm transfer <address> SOL 1.5 -o json --dry-run
 tm transfer <address> SOL 1.5 -o json --force
 ```
 
-| Flag | Default | Description |
-|------|---------|-------------|
-| `--chain` | `solana` | Blockchain network (`solana` or `base`) |
-| `--qty-unit` | `base` | Quantity unit (`base` = token amount, `quote` = USDC amount) |
-| `--dry-run` | `false` | Print transfer details without executing |
-| `--force` | `false` | Execute without confirmation (required for JSON mode) |
+| Flag         | Default  | Description                                                  |
+| ------------ | -------- | ------------------------------------------------------------ |
+| `--chain`    | `solana` | Blockchain network (`solana` or `base`)                      |
+| `--qty-unit` | `base`   | Quantity unit (`base` = token amount, `quote` = USDC amount) |
+| `--dry-run`  | `false`  | Print transfer details without executing                     |
+| `--force`    | `false`  | Execute without confirmation (required for JSON mode)        |
+
+### Onramp (deposit USD → USDC)
+
+```bash
+# Get a Coinbase onramp URL for $50
+tm onramp 50 -o json
+
+# Open the URL in your browser automatically
+tm onramp 50 --open
+```
+
+Returns a time-limited URL (expires in 5 minutes) to deposit USD into your Solana USDC wallet via Coinbase.
+
+| Flag     | Default | Description                              |
+| -------- | ------- | ---------------------------------------- |
+| `--open` | `false` | Open the onramp URL in the default browser |
+
+Example output:
+
+```json
+{
+  "url": "https://pay.coinbase.com/...",
+  "amount": "50"
+}
+```
+
+After the user completes the onramp in their browser, funds may take a moment to arrive. Poll `tm balances -o json` to confirm the USDC balance has increased before proceeding with trades or transfers.
 
 ### Configuration
 
@@ -183,11 +225,11 @@ All errors return a non-zero exit code and (with `-o json`) a JSON body:
 }
 ```
 
-| Exit code | Name | Meaning |
-|-----------|------|---------|
-| 0 | success | Command succeeded |
-| 1 | general | Unexpected error |
-| 2 | usage | Invalid arguments or flags |
-| 3 | auth | Authentication failed or missing |
-| 4 | api | API returned an error |
-| 5 | network | Network request failed |
+| Exit code | Name    | Meaning                          |
+| --------- | ------- | -------------------------------- |
+| 0         | success | Command succeeded                |
+| 1         | general | Unexpected error                 |
+| 2         | usage   | Invalid arguments or flags       |
+| 3         | auth    | Authentication failed or missing |
+| 4         | api     | API returned an error            |
+| 5         | network | Network request failed           |
