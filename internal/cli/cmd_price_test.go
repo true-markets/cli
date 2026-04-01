@@ -300,6 +300,93 @@ func TestRunPriceOneShot(t *testing.T) {
 		require.Error(t, err)
 		assert.Contains(t, err.Error(), "no price data available for NOPE")
 	})
+
+	t.Run("partial failure returns successful results and error", func(t *testing.T) {
+		server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			symbol := r.URL.Query().Get("symbol")
+			w.Header().Set("Content-Type", "application/json")
+			switch symbol {
+			case "SOL":
+				_, _ = w.Write([]byte(`{
+					"symbol": "SOL",
+					"candles": [
+						{"interval": "30s", "closePrice": "86.51"},
+						{"interval": "24h", "openPrice": "91.21", "highPrice": "91.94", "lowPrice": "85.40"}
+					]
+				}`))
+			case "FAKECOIN":
+				w.WriteHeader(http.StatusNotFound)
+				_, _ = w.Write([]byte(`{"error":"","message":"symbol not found","code":404}`))
+			case "JUP":
+				_, _ = w.Write([]byte(`{
+					"symbol": "JUP",
+					"candles": [
+						{"interval": "30s", "closePrice": "1.23"},
+						{"interval": "24h", "openPrice": "1.10", "highPrice": "1.30", "lowPrice": "1.05"}
+					]
+				}`))
+			}
+		}))
+		t.Cleanup(server.Close)
+
+		root := newRootCmd()
+		root.SetArgs([]string{"price", "SOL", "FAKECOIN", "JUP", "-o", "json"})
+		root.PersistentPreRunE = func(cmd *cobra.Command, _ []string) error {
+			cmd.SilenceUsage = true
+			ctx := cmd.Context()
+			ctx = context.WithValue(ctx, ctxKeyHost, server.URL)
+			ctx = context.WithValue(ctx, ctxKeyOutput, "json")
+			cmd.SetContext(ctx)
+			return nil
+		}
+
+		got := captureStdout(t, func() {
+			err := root.Execute()
+			require.Error(t, err)
+			assert.Contains(t, err.Error(), "404")
+		})
+
+		// Successful symbols should still be in the output.
+		outputs := decodeJSONObjects[priceOutput](t, got)
+		require.Len(t, outputs, 2)
+
+		bySymbol := make(map[string]priceOutput)
+		for _, o := range outputs {
+			bySymbol[o.Symbol] = o
+		}
+		assert.Equal(t, "86.51", bySymbol["SOL"].Price)
+		assert.Equal(t, "1.23", bySymbol["JUP"].Price)
+	})
+
+	t.Run("stream ignores unknown symbols", func(t *testing.T) {
+		msg := buildPriceCandlesMsg(t, 1711872600, []wsPriceCandle{
+			{Symbol: "SOL", Interval: "30s", Close: "86.51"},
+			{Symbol: "SOL", Interval: "24h", Open: "91.21", High: "91.94", Low: "85.40"},
+		})
+
+		server := mockWSServer(t, []string{msg})
+
+		root := newRootCmd()
+		root.SetArgs([]string{"price", "SOL", "FAKECOIN", "--stream", "-o", "json"})
+		root.PersistentPreRunE = func(cmd *cobra.Command, _ []string) error {
+			cmd.SilenceUsage = true
+			ctx := cmd.Context()
+			ctx = context.WithValue(ctx, ctxKeyHost, server.URL)
+			ctx = context.WithValue(ctx, ctxKeyOutput, "json")
+			cmd.SetContext(ctx)
+			return nil
+		}
+
+		got := captureStdout(t, func() {
+			err := root.Execute()
+			require.NoError(t, err)
+		})
+
+		outputs := decodeJSONObjects[priceOutput](t, got)
+		require.Len(t, outputs, 1)
+		assert.Equal(t, "SOL", outputs[0].Symbol)
+		assert.Equal(t, "86.51", outputs[0].Price)
+	})
 }
 
 // mockWSServer creates an httptest server that upgrades to WebSocket,

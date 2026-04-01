@@ -108,29 +108,43 @@ func runPriceOneShot(cmd *cobra.Command, symbols []string) error {
 	jsonOut := ContextOutputJSON(ctx)
 	now := time.Now().UTC().Format(time.RFC3339)
 
-	outputs := make([]priceOutput, len(symbols))
-	g, gctx := errgroup.WithContext(ctx)
+	type result struct {
+		output priceOutput
+		err    error
+	}
+	results := make([]result, len(symbols))
+	g := new(errgroup.Group)
 	g.SetLimit(priceFetchParallel)
 
 	for i, symbol := range symbols {
 		g.Go(func() error {
-			resp, err := fetchPrice(gctx, host, symbol)
+			resp, err := fetchPrice(ctx, host, symbol)
 			if err != nil {
-				return err
+				results[i] = result{err: err}
+				return nil
 			}
 
 			out := restResponseToOutput(resp, now)
 			if out.Price == "" {
-				return &CLIError{Code: ExitAPI, Message: fmt.Sprintf("no price data available for %s", symbol)}
+				results[i] = result{err: &CLIError{Code: ExitAPI, Message: fmt.Sprintf("no price data available for %s", symbol)}}
+				return nil
 			}
 
-			outputs[i] = out
+			results[i] = result{output: out}
 			return nil
 		})
 	}
 
-	if err := g.Wait(); err != nil {
-		return err
+	_ = g.Wait()
+
+	var outputs []priceOutput
+	var errs []error
+	for _, r := range results {
+		if r.err != nil {
+			errs = append(errs, r.err)
+		} else {
+			outputs = append(outputs, r.output)
+		}
 	}
 
 	if jsonOut {
@@ -139,18 +153,25 @@ func runPriceOneShot(cmd *cobra.Command, symbols []string) error {
 				return err
 			}
 		}
-		return nil
+	} else if len(outputs) > 0 {
+		tbl := &output.Table{
+			Headers: []string{"SYMBOL", "PRICE", "24H OPEN", "24H HIGH", "24H LOW", "TIMESTAMP"},
+		}
+		for _, out := range outputs {
+			tbl.Rows = append(tbl.Rows, []string{
+				out.Symbol, out.Price, out.Open24h, out.High24h, out.Low24h, out.Timestamp,
+			})
+		}
+		tbl.Render(os.Stdout)
 	}
 
-	tbl := &output.Table{
-		Headers: []string{"SYMBOL", "PRICE", "24H OPEN", "24H HIGH", "24H LOW", "TIMESTAMP"},
+	if len(errs) > 0 {
+		msgs := make([]string, len(errs))
+		for i, e := range errs {
+			msgs[i] = e.Error()
+		}
+		return &CLIError{Code: ExitAPI, Message: strings.Join(msgs, "; ")}
 	}
-	for _, out := range outputs {
-		tbl.Rows = append(tbl.Rows, []string{
-			out.Symbol, out.Price, out.Open24h, out.High24h, out.Low24h, out.Timestamp,
-		})
-	}
-	tbl.Render(os.Stdout)
 	return nil
 }
 
