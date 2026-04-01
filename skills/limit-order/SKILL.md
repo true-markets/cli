@@ -18,6 +18,7 @@ Place a limit order by polling quotes in a loop and executing when the price rea
 ## Gather Parameters
 
 Ask the user (or extract from their message) for:
+
 1. **Side**: `buy` or `sell`
 2. **Token**: symbol (e.g., SOL, ETH) or contract address
 3. **Amount**: how much to trade (in default units — USDC for buy, token for sell)
@@ -25,6 +26,16 @@ Ask the user (or extract from their message) for:
 5. **Poll interval** (optional, default 10 seconds)
 
 If any required parameter is missing, ask with AskUserQuestion.
+
+## Alternative: Use Price Streaming
+
+Instead of polling with dry-run quotes, you can monitor the price via the streaming WebSocket feed:
+
+```bash
+tm price <token> --stream -o json
+```
+
+This outputs newline-delimited JSON with live price updates. Parse each line and compare against the target price. When the target is reached, execute the trade with `tm <side> <token> <amount> -o json --force`. This is more efficient than repeated dry-run polling.
 
 ## Get Initial Quote
 
@@ -35,10 +46,12 @@ tm <side> <token> <amount> -o json --dry-run
 ```
 
 Parse the JSON output. Compute the current effective price:
+
 - **Buy** (qty_unit=quote by default): `price = qty / qty_out` (USDC per token)
 - **Sell** (qty_unit=base by default): `price = qty_out / qty` (USDC per token)
 
 Display to the user:
+
 - Current price: $X.XX per token
 - Target price: $Y.YY per token
 - Direction: buying when price drops to target / selling when price rises to target
@@ -104,6 +117,7 @@ done
 ```
 
 **Important rules:**
+
 - Substitute actual values for `<side>`, `<token>`, `<amount>`, `<target_price>`, `<poll_interval>`.
 - Run this as a single bash command (join lines with `;` or use a heredoc).
 - Use timeout of 600000 so it runs for up to 10 minutes.
@@ -113,6 +127,7 @@ done
 ## After Execution
 
 Parse the trade result JSON and report:
+
 - Whether the trade executed successfully
 - The transaction hash and explorer link (if present)
 - The final execution price vs the target price

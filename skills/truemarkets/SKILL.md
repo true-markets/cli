@@ -79,11 +79,14 @@ Example output:
 ### Check asset price
 
 ```bash
+# Single asset
 tm price SOL -o json
-tm price BTC -o json
+
+# Multiple assets
+tm price BTC ETH SOL -o json
 ```
 
-Returns current price and 24-hour open, high, and low. No authentication required.
+Returns current price and 24-hour open, high, and low for one or more assets. No authentication required.
 
 Example output:
 
@@ -93,9 +96,32 @@ Example output:
   "price": "86.51",
   "open_24h": "91.21",
   "high_24h": "91.94",
-  "low_24h": "85.40"
+  "low_24h": "85.40",
+  "timestamp": "2026-03-31T10:30:00Z"
 }
 ```
+
+### Stream live prices
+
+```bash
+# Stream price updates for specific assets
+tm price BTC ETH SOL --stream -o json
+```
+
+Opens a WebSocket connection and continuously outputs price updates as newline-delimited JSON (one JSON object per line). Press Ctrl+C to stop. No authentication required.
+
+Each line is a complete JSON object:
+
+```json
+{"symbol":"BTC","price":"67234.50","open_24h":"65000.00","high_24h":"67500.00","low_24h":"64800.00","timestamp":"2026-03-31T10:30:00Z"}
+{"symbol":"ETH","price":"3456.78","open_24h":"3400.00","high_24h":"3500.00","low_24h":"3380.00","timestamp":"2026-03-31T10:30:00Z"}
+```
+
+| Flag       | Default | Description                       |
+| ---------- | ------- | --------------------------------- |
+| `--stream` | `false` | Stream live updates via WebSocket |
+
+**Agent usage:** Use `--stream` to monitor prices in real time for trading decisions. Parse each line as independent JSON. The stream will output updates as they arrive from the server, typically every few seconds.
 
 ### Show balances
 
@@ -180,24 +206,24 @@ tm transfer <address> SOL 1.5 -o json --force
 ### Onramp (deposit USD → USDC)
 
 ```bash
-# Get a Coinbase onramp URL for $50
+# Get an onramp URL for $50
 tm onramp 50 -o json
 
 # Open the URL in your browser automatically
 tm onramp 50 --open
 ```
 
-Returns a time-limited URL (expires in 5 minutes) to deposit USD into your Solana USDC wallet via Coinbase.
+Returns a time-limited URL (expires in 5 minutes) to deposit USD into your Solana USDC wallet.
 
-| Flag     | Default | Description                              |
-| -------- | ------- | ---------------------------------------- |
+| Flag     | Default | Description                                |
+| -------- | ------- | ------------------------------------------ |
 | `--open` | `false` | Open the onramp URL in the default browser |
 
 Example output:
 
 ```json
 {
-  "url": "https://pay.coinbase.com/...",
+  "url": "https://...",
   "amount": "50"
 }
 ```
