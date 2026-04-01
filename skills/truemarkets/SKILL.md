@@ -86,7 +86,7 @@ tm price SOL -o json
 tm price BTC ETH SOL -o json
 ```
 
-Returns current price and 24-hour open, high, and low for one or more assets. No authentication required.
+Returns current price and 24-hour open, high, and low for one or more assets (up to 50). Multiple symbols are fetched concurrently. No authentication required.
 
 Example output:
 

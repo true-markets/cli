@@ -14,15 +14,18 @@ import (
 
 	"github.com/gorilla/websocket"
 	"github.com/spf13/cobra"
+	"golang.org/x/sync/errgroup"
 
 	"github.com/true-markets/cli/internal/cli/output"
 )
 
 const (
-	priceEndpoint    = "/v1/defi/market/prices"
-	priceWSEndpoint  = "/v1/defi/market"
-	wsMsgPriceCandle = "price_candles"
-	streamRowFmt     = "%-10s  %-14s  %-14s  %-14s  %-14s  %s\n"
+	priceEndpoint      = "/v1/defi/market/prices"
+	priceWSEndpoint    = "/v1/defi/market"
+	wsMsgPriceCandle   = "price_candles"
+	streamRowFmt       = "%-10s  %-14s  %-14s  %-14s  %-14s  %s\n"
+	maxPriceSymbols    = 50
+	priceFetchParallel = 5
 )
 
 type priceCandle struct {
@@ -70,12 +73,19 @@ func newPriceCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "price <symbol> [symbols...]",
 		Short: "Get the current price and 24h OHLC for one or more assets",
-		Long: `Get the current price and 24h open, high, and low for one or more assets.
+		Long: `Get the current price and 24h open, high, and low for one or more assets (up to 50).
 
 Use --stream to open a WebSocket connection and continuously receive price updates.
 Press Ctrl+C to stop streaming.`,
 		Args: cobra.MinimumNArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
+			if len(args) > maxPriceSymbols {
+				return &CLIError{
+					Code:    ExitUsage,
+					Message: fmt.Sprintf("too many symbols: %d (maximum %d)", len(args), maxPriceSymbols),
+				}
+			}
+
 			symbols := make([]string, len(args))
 			for i, a := range args {
 				symbols[i] = strings.ToUpper(a)
@@ -98,18 +108,29 @@ func runPriceOneShot(cmd *cobra.Command, symbols []string) error {
 	jsonOut := ContextOutputJSON(ctx)
 	now := time.Now().UTC().Format(time.RFC3339)
 
-	var outputs []priceOutput
-	for _, symbol := range symbols {
-		resp, err := fetchPrice(ctx, host, symbol)
-		if err != nil {
-			return err
-		}
+	outputs := make([]priceOutput, len(symbols))
+	g, gctx := errgroup.WithContext(ctx)
+	g.SetLimit(priceFetchParallel)
 
-		out := restResponseToOutput(resp, now)
-		if out.Price == "" {
-			return &CLIError{Code: ExitAPI, Message: fmt.Sprintf("no price data available for %s", symbol)}
-		}
-		outputs = append(outputs, out)
+	for i, symbol := range symbols {
+		g.Go(func() error {
+			resp, err := fetchPrice(gctx, host, symbol)
+			if err != nil {
+				return err
+			}
+
+			out := restResponseToOutput(resp, now)
+			if out.Price == "" {
+				return &CLIError{Code: ExitAPI, Message: fmt.Sprintf("no price data available for %s", symbol)}
+			}
+
+			outputs[i] = out
+			return nil
+		})
+	}
+
+	if err := g.Wait(); err != nil {
+		return err
 	}
 
 	if jsonOut {
