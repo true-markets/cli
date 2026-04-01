@@ -123,7 +123,7 @@ func TestParsePriceCandlesMessage(t *testing.T) {
 
 	t.Run("filters by symbol", func(t *testing.T) {
 		msg := wsServerMessage{
-			Type:      "price_candles",
+			Type:      wsMsgPriceCandle,
 			Timestamp: 1711872600,
 		}
 		candles := []wsPriceCandle{
@@ -164,7 +164,7 @@ func TestParsePriceCandlesMessage(t *testing.T) {
 
 	t.Run("skips symbols without 30s candle", func(t *testing.T) {
 		msg := wsServerMessage{
-			Type:      "price_candles",
+			Type:      wsMsgPriceCandle,
 			Timestamp: 1711872600,
 		}
 		candles := []wsPriceCandle{
@@ -358,7 +358,7 @@ func buildPriceCandlesMsg(t *testing.T, timestamp int64, candles []wsPriceCandle
 	candlesJSON, err := json.Marshal(candles)
 	require.NoError(t, err)
 	msg := wsServerMessage{
-		Type:      "price_candles",
+		Type:      wsMsgPriceCandle,
 		Timestamp: timestamp,
 		Data:      candlesJSON,
 	}

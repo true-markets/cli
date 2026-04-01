@@ -18,8 +18,12 @@ import (
 	"github.com/true-markets/cli/internal/cli/output"
 )
 
-const priceEndpoint = "/v1/defi/market/prices"
-const priceWSEndpoint = "/v1/defi/market"
+const (
+	priceEndpoint    = "/v1/defi/market/prices"
+	priceWSEndpoint  = "/v1/defi/market"
+	wsMsgPriceCandle = "price_candles"
+	streamRowFmt     = "%-10s  %-14s  %-14s  %-14s  %-14s  %s\n"
+)
 
 type priceCandle struct {
 	Interval   string `json:"interval"`
@@ -157,9 +161,10 @@ func runPriceStream(cmd *cobra.Command, symbols []string) error {
 		symbolSet[s] = struct{}{}
 	}
 
-	wsURL := strings.Replace(host, "https://", "wss://", 1)
-	wsURL = strings.Replace(wsURL, "http://", "ws://", 1)
-	wsURL += priceWSEndpoint
+	wsURL, err := httpToWSURL(host, priceWSEndpoint)
+	if err != nil {
+		return &CLIError{Code: ExitNetwork, Message: fmt.Sprintf("invalid host URL: %v", err)}
+	}
 
 	ctx, stop := signal.NotifyContext(ctx, os.Interrupt)
 	defer stop()
@@ -175,9 +180,11 @@ func runPriceStream(cmd *cobra.Command, symbols []string) error {
 	}
 
 	if !jsonOut {
-		fmt.Fprintf(os.Stdout, "%-10s  %-14s  %-14s  %-14s  %-14s  %s\n",
+		fmt.Fprintf(os.Stdout, streamRowFmt,
 			"SYMBOL", "PRICE", "24H OPEN", "24H HIGH", "24H LOW", "TIMESTAMP")
 	}
+
+	lastPrice := make(map[string]string) // symbol → last printed price (dedup)
 
 	for {
 		select {
@@ -203,10 +210,15 @@ func runPriceStream(cmd *cobra.Command, symbols []string) error {
 
 		outputs := parsePriceCandlesMessage(message, symbolSet)
 		for _, out := range outputs {
+			if lastPrice[out.Symbol] == out.Price {
+				continue
+			}
+			lastPrice[out.Symbol] = out.Price
+
 			if jsonOut {
 				_ = output.WriteJSON(os.Stdout, out)
 			} else {
-				fmt.Fprintf(os.Stdout, "%-10s  %-14s  %-14s  %-14s  %-14s  %s\n",
+				fmt.Fprintf(os.Stdout, streamRowFmt,
 					out.Symbol, out.Price, out.Open24h, out.High24h, out.Low24h, out.Timestamp)
 			}
 		}
@@ -249,7 +261,7 @@ func parsePriceCandlesMessage(message []byte, symbolSet map[string]struct{}) []p
 	if err := json.Unmarshal(message, &msg); err != nil {
 		return nil
 	}
-	if msg.Type != "price_candles" {
+	if msg.Type != wsMsgPriceCandle {
 		return nil
 	}
 
@@ -301,6 +313,21 @@ func parsePriceCandlesMessage(message []byte, symbolSet map[string]struct{}) []p
 		})
 	}
 	return outputs
+}
+
+func httpToWSURL(host, path string) (string, error) {
+	u, err := url.Parse(host)
+	if err != nil {
+		return "", err
+	}
+	switch u.Scheme {
+	case "https":
+		u.Scheme = "wss"
+	case "http":
+		u.Scheme = "ws"
+	}
+	u.Path = path
+	return u.String(), nil
 }
 
 func fetchPrice(ctx context.Context, host, symbol string) (*priceResponse, error) {
