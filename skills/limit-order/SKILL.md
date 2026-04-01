@@ -35,7 +35,7 @@ Instead of polling with dry-run quotes, you can monitor the price via the stream
 tm price <token> --stream -o json
 ```
 
-This outputs newline-delimited JSON with live price updates. Parse each line and compare against the target price. When the target is reached, execute the trade with `tm <side> <token> <amount> -o json --force`. This is more efficient than repeated dry-run polling.
+This outputs newline-delimited JSON with live price updates. Parse each line and compare against the target price. When the target is reached, stop the stream and run a `--dry-run` quote to confirm the current execution price before trading. Do not execute a trade based solely on the stream price — always verify with a fresh dry-run quote first.
 
 ## Get Initial Quote
 

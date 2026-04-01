@@ -121,7 +121,7 @@ Each line is a complete JSON object:
 | ---------- | ------- | --------------------------------- |
 | `--stream` | `false` | Stream live updates via WebSocket |
 
-**Agent usage:** Use `--stream` to monitor prices in real time for trading decisions. Parse each line as independent JSON. The stream will output updates as they arrive from the server, typically every few seconds.
+**Agent usage:** Use `--stream` to monitor prices in real time. Parse each line as independent JSON. When a target price is reached, stop the stream and run a `--dry-run` quote to confirm the execution price before trading. Do not trade based solely on stream prices.
 
 ### Show balances
 
