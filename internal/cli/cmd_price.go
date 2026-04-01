@@ -201,7 +201,7 @@ func runPriceStream(cmd *cobra.Command, symbols []string) error {
 	}
 
 	if !jsonOut {
-		fmt.Fprintf(os.Stdout, streamRowFmt,
+		_, _ = fmt.Fprintf(os.Stdout, streamRowFmt,
 			"SYMBOL", "PRICE", "24H OPEN", "24H HIGH", "24H LOW", "TIMESTAMP")
 	}
 
@@ -239,7 +239,7 @@ func runPriceStream(cmd *cobra.Command, symbols []string) error {
 			if jsonOut {
 				_ = output.WriteJSON(os.Stdout, out)
 			} else {
-				fmt.Fprintf(os.Stdout, streamRowFmt,
+				_, _ = fmt.Fprintf(os.Stdout, streamRowFmt,
 					out.Symbol, out.Price, out.Open24h, out.High24h, out.Low24h, out.Timestamp)
 			}
 		}

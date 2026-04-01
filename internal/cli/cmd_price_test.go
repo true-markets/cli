@@ -3,7 +3,6 @@ package cli
 import (
 	"context"
 	"encoding/json"
-	"fmt"
 	"net/http"
 	"net/http/httptest"
 	"strings"
@@ -157,7 +156,7 @@ func TestParsePriceCandlesMessage(t *testing.T) {
 	})
 
 	t.Run("ignores non-price messages", func(t *testing.T) {
-		msg := fmt.Sprintf(`{"type":"trending_assets","timestamp":123,"data":[]}`)
+		msg := `{"type":"trending_assets","timestamp":123,"data":[]}`
 		outputs := parsePriceCandlesMessage([]byte(msg), symbolSet)
 		assert.Empty(t, outputs)
 	})
