@@ -84,6 +84,7 @@ func newRootCmd() *cobra.Command {
 	rootCmd := &cobra.Command{
 		Use:           "tm",
 		Short:         "True Markets CLI",
+		Long:          bannerText(),
 		Version:       versionString(),
 		SilenceErrors: true,
 		PersistentPreRunE: func(cmd *cobra.Command, _ []string) error {
@@ -93,6 +94,11 @@ func newRootCmd() *cobra.Command {
 	}
 
 	rootCmd.SetVersionTemplate("tm " + versionString() + "\n")
+
+	// Apply True Markets branding to command menus!
+	cobra.AddTemplateFunc("cyanBold", cyanBold)
+	cobra.AddTemplateFunc("cyan", cyan)
+	rootCmd.SetUsageTemplate(customUsageTemplate)
 
 	rootCmd.PersistentFlags().StringP("output", "o", "table", "Output format (json|table)")
 
@@ -108,6 +114,7 @@ func newRootCmd() *cobra.Command {
 	rootCmd.AddCommand(newTransferCmd())
 	rootCmd.AddCommand(newPriceCmd())
 	rootCmd.AddCommand(newOnrampCmd())
+	rootCmd.AddCommand(newBetCmd())
 
 	return rootCmd
 }
@@ -123,6 +130,26 @@ func versionString() string {
 		v += " (" + CommitSHA + ")"
 	}
 	return v
+}
+
+func bannerText() string {
+	logo := `
+  ████████╗██████╗ ██╗   ██╗███████╗
+  ╚══██╔══╝██╔══██╗██║   ██║██╔════╝
+     ██║   ██████╔╝██║   ██║█████╗  
+     ██║   ██╔══██╗██║   ██║██╔══╝  
+     ██║   ██║  ██║╚██████╔╝███████╗
+     ╚═╝   ╚═╝  ╚═╝ ╚═════╝ ╚══════╝
+  ███╗   ███╗ █████╗ ██████╗ ██╗  ██╗███████╗████████╗███████╗
+  ████╗ ████║██╔══██╗██╔══██╗██║ ██╔╝██╔════╝╚══██╔══╝██╔════╝
+  ██╔████╔██║███████║██████╔╝█████╔╝ █████╗     ██║   ███████╗
+  ██║╚██╔╝██║██╔══██║██╔══██╗██╔═██╗ ██╔══╝     ██║   ╚════██║
+  ██║ ╚═╝ ██║██║  ██║██║  ██║██║  ██╗███████╗   ██║   ███████║
+  ╚═╝     ╚═╝╚═╝  ╚═╝╚═╝  ╚═╝╚═╝  ╚═╝╚══════╝   ╚═╝   ╚══════╝`
+
+	tagline := "\n\n  Trade crypto from your terminal. Fast. Simple. Peer-to-peer."
+
+	return cyanBold(logo) + dim(tagline)
 }
 
 func resolveContext(cmd *cobra.Command) error {
@@ -146,3 +173,28 @@ func resolveContext(cmd *cobra.Command) error {
 
 	return nil
 }
+
+const customUsageTemplate = `{{cyanBold "Usage:"}}{{if .Runnable}}
+  {{.UseLine}}{{end}}{{if .HasAvailableSubCommands}}
+  {{.CommandPath}} [command]{{end}}{{if gt (len .Aliases) 0}}
+
+{{cyanBold "Aliases:"}}
+  {{.NameAndAliases}}{{end}}{{if .HasExample}}
+
+{{cyanBold "Examples:"}}
+{{.Example}}{{end}}{{if .HasAvailableSubCommands}}
+
+{{cyanBold "Available Commands:"}}{{range .Commands}}{{if (or .IsAvailableCommand (eq .Name "help"))}}
+  {{cyan (rpad .Name .NamePadding) }} {{.Short}}{{end}}{{end}}{{end}}{{if .HasAvailableLocalFlags}}
+
+{{cyanBold "Flags:"}}
+{{.LocalFlags.FlagUsages | trimTrailingWhitespaces}}{{end}}{{if .HasAvailableInheritedFlags}}
+
+{{cyanBold "Global Flags:"}}
+{{.InheritedFlags.FlagUsages | trimTrailingWhitespaces}}{{end}}{{if .HasHelpSubCommands}}
+
+{{cyanBold "Additional help topics:"}}{{range .Commands}}{{if .IsAdditionalHelpTopicCommand}}
+  {{cyan (rpad .CommandPath .CommandPathPadding) }} {{.Short}}{{end}}{{end}}{{end}}{{if .HasAvailableSubCommands}}
+
+Use "{{.CommandPath}} [command] --help" for more information about a command.{{end}}
+`
