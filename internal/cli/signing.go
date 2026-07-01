@@ -7,7 +7,7 @@ import (
 
 	"github.com/tkhq/go-sdk/pkg/apikey"
 
-	"github.com/true-markets/cli/pkg/client"
+	"github.com/true-markets/cli/pkg/conductor"
 )
 
 // signPayload signs a payload with an API key and returns the signature.
@@ -30,7 +30,7 @@ func signPayload(payload, privateKey string) (string, error) {
 }
 
 // signPayloads signs multiple unsigned payloads and returns the signatures.
-func signPayloads(payloads []client.UnsignedPayload, apiKey string) ([]string, error) {
+func signPayloads(payloads []conductor.UnsignedPayload, apiKey string) ([]string, error) {
 	if len(payloads) == 0 {
 		return nil, errors.New("no payloads to sign")
 	}

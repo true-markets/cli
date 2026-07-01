@@ -8,7 +8,7 @@ import (
 	"github.com/spf13/cobra"
 
 	"github.com/true-markets/cli/internal/cli/output"
-	"github.com/true-markets/cli/pkg/client"
+	"github.com/true-markets/cli/pkg/conductor"
 )
 
 func newBalancesCmd() *cobra.Command {
@@ -34,15 +34,12 @@ func runBalances(cmd *cobra.Command, _ []string) error {
 	}
 	ctx = cmd.Context() // re-read in case requireAuth updated it
 
-	cli, err := newAPIClient(host, authToken)
+	cli, err := newConductorClient(host, authToken)
 	if err != nil {
 		return fmt.Errorf("create client: %w", err)
 	}
 
-	evm := true
-	resp, err := cli.GetBalancesWithResponse(ctx, &client.GetBalancesParams{
-		Evm: &evm,
-	})
+	resp, err := cli.GetBalancesWithResponse(ctx)
 	if err != nil {
 		return fmt.Errorf("fetch balances: %w", err)
 	}
@@ -57,10 +54,14 @@ func runBalances(cmd *cobra.Command, _ []string) error {
 		}
 	}
 
-	var balances []client.Balance
-	if resp.JSON200.Balances != nil {
-		balances = *resp.JSON200.Balances
+	var balances []conductor.BalanceItem
+	if resp.JSON200.Data != nil {
+		balances = *resp.JSON200.Data
 	}
+
+	// The gateway returns unified balances and merges CeFi holdings in with a
+	// null chain; this DeFi-only CLI surfaces only on-chain balances.
+	balances = filterDeFiBalances(balances)
 
 	chainFlag, _ := cmd.Flags().GetString("chain")
 	if chainFlag != "" {
@@ -71,8 +72,10 @@ func runBalances(cmd *cobra.Command, _ []string) error {
 		balances = filterBalancesByChain(balances, chain)
 	}
 
+	// Serialize the filtered set (not the raw response) so --chain is honored in
+	// JSON output too.
 	if ContextOutputJSON(ctx) {
-		if err := output.WriteJSON(os.Stdout, resp.JSON200); err != nil {
+		if err := output.WriteJSON(os.Stdout, conductor.ListBalancesResponseBody{Data: &balances}); err != nil {
 			return fmt.Errorf("write json: %w", err)
 		}
 		return nil
@@ -102,17 +105,29 @@ func runBalances(cmd *cobra.Command, _ []string) error {
 			if b.Decimals != nil {
 				decimals = fmt.Sprintf("%d", *b.Decimals)
 			}
-			row = append(row, getStringValue(b.Asset), decimals)
+			row = append(row, getStringValue(b.Address), decimals)
 		}
-		row = append(row, getStringValue(b.Balance))
+		row = append(row, getStringValue(b.Total))
 		tbl.Rows = append(tbl.Rows, row)
 	}
 	tbl.Render(os.Stdout)
 	return nil
 }
 
-func filterBalancesByChain(balances []client.Balance, chain string) []client.Balance {
-	var filtered []client.Balance
+// filterDeFiBalances keeps only on-chain (DeFi) balances. The gateway merges in
+// CeFi balances with a null chain, which this DeFi-only CLI does not surface.
+func filterDeFiBalances(balances []conductor.BalanceItem) []conductor.BalanceItem {
+	var filtered []conductor.BalanceItem
+	for _, b := range balances {
+		if b.Chain != nil && *b.Chain != "" {
+			filtered = append(filtered, b)
+		}
+	}
+	return filtered
+}
+
+func filterBalancesByChain(balances []conductor.BalanceItem, chain string) []conductor.BalanceItem {
+	var filtered []conductor.BalanceItem
 	for _, b := range balances {
 		if b.Chain != nil && strings.EqualFold(*b.Chain, chain) {
 			filtered = append(filtered, b)

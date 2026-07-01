@@ -7,11 +7,15 @@ import (
 	"time"
 
 	"github.com/true-markets/cli/pkg/client"
+	"github.com/true-markets/cli/pkg/conductor"
 )
 
 const (
 	apiHost    = "https://api.truemarkets.co"
 	apiVersion = "2026-01-26"
+
+	// gatewayPath is the base path of the Conductor gateway on the API host.
+	gatewayPath = "/v1/gateway"
 )
 
 // resolveAuthToken returns the bearer token from env var or stored credentials.
@@ -48,10 +52,7 @@ func newAPIClient(host, authToken string) (*client.ClientWithResponses, error) {
 		host,
 		client.WithHTTPClient(httpClient),
 		client.WithRequestEditorFn(func(_ context.Context, req *http.Request) error {
-			req.Header.Set("User-Agent", "tm/"+Version)
-			if authToken != "" {
-				req.Header.Set("Authorization", "Bearer "+authToken)
-			}
+			setAuthHeaders(req, authToken)
 			q := req.URL.Query()
 			q.Set("version", apiVersion)
 			req.URL.RawQuery = q.Encode()
@@ -62,6 +63,35 @@ func newAPIClient(host, authToken string) (*client.ClientWithResponses, error) {
 		return nil, fmt.Errorf("create client: %w", err)
 	}
 	return c, nil
+}
+
+// newConductorClient creates a Conductor gateway client with the resolved auth
+// token. The gateway is reached at host + gatewayPath; unlike the legacy DeFi
+// client it does not inject a `version` query parameter.
+func newConductorClient(host, authToken string) (*conductor.ClientWithResponses, error) {
+	httpClient := newHTTPClient()
+
+	c, err := conductor.NewClientWithResponses(
+		host+gatewayPath,
+		conductor.WithHTTPClient(httpClient),
+		conductor.WithRequestEditorFn(func(_ context.Context, req *http.Request) error {
+			setAuthHeaders(req, authToken)
+			return nil
+		}),
+	)
+	if err != nil {
+		return nil, fmt.Errorf("create conductor client: %w", err)
+	}
+	return c, nil
+}
+
+// setAuthHeaders sets the User-Agent and (when present) the bearer auth header
+// shared by every API request.
+func setAuthHeaders(req *http.Request, authToken string) {
+	req.Header.Set("User-Agent", "tm/"+Version)
+	if authToken != "" {
+		req.Header.Set("Authorization", "Bearer "+authToken)
+	}
 }
 
 func newHTTPClient() *http.Client {
