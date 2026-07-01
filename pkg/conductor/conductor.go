@@ -24,20 +24,14 @@ const (
 
 // Defines values for Chain.
 const (
-	ChainBase          Chain = "base"
-	ChainHypercorePerp Chain = "hypercore-perp"
-	ChainHypercoreSpot Chain = "hypercore-spot"
-	ChainSolana        Chain = "solana"
+	ChainBase   Chain = "base"
+	ChainSolana Chain = "solana"
 )
 
 // Valid indicates whether the value is a known member of the Chain enum.
 func (e Chain) Valid() bool {
 	switch e {
 	case ChainBase:
-		return true
-	case ChainHypercorePerp:
-		return true
-	case ChainHypercoreSpot:
 		return true
 	case ChainSolana:
 		return true
@@ -371,8 +365,6 @@ type CancelOrderResponseBody struct {
 // Chain The blockchain network for DeFi orders. Omit for CeFi orders.
 // * **solana** — Execute the swap on the Solana blockchain.
 // * **base** — Execute the swap on the Base (Ethereum L2) blockchain.
-// * **hypercore-spot** — Execute the order on the Hyperliquid spot order book.
-// * **hypercore-perp** — Execute the order on the Hyperliquid perpetuals order book.
 type Chain string
 
 // CreateOrderRequest Request to create a new order.
@@ -380,28 +372,19 @@ type Chain string
 // **Limit orders** (`type: limit`):
 // - `price` is required and must be a positive decimal string
 // - `qty_unit` must be `base`
-// - `chain` is optional (omit for CeFi; include a DeFi chain such as `hypercore-spot` to rest the order on-chain)
+// - `chain` must be omitted (CeFi limit order)
 //
 // **Market orders** (`type: market`):
 // - `price` is not accepted
 // - Buy orders require `qty_unit: quote`
 // - Sell orders accept `qty_unit: base` or `qty_unit: quote`
 // - `chain` is optional (omit for CeFi, include for DeFi)
-//
-// **Perp orders** (`chain: hypercore-perp`):
-// - `leverage` is required to open a position (buy = long, sell = short) and must be between 1 and 50; it must be omitted for any other chain
-// - `reduce_only: true` marks the order as a close of the opposite position; `leverage` is then ignored
-// - `qty` is the isolated margin to commit; position notional = `qty` × `leverage`
-// - `qty_unit` may be `quote` (margin) or `base` (position size) on either side; the defi service applies the perp sizing rules
 type CreateOrderRequest struct {
 	// BaseAsset Asset symbol for CeFi (e.g. `BTC`); token contract address on `chain` for DeFi.
 	BaseAsset string `json:"base_asset"`
 
 	// Chain Blockchain network for DeFi orders. Omit for CeFi orders.
 	Chain *Chain `json:"chain,omitempty"`
-
-	// Leverage Isolated-margin leverage for a perp order. Required when `chain` is `hypercore-perp` and the order opens a position (not reduce-only); must not be sent for any other chain.
-	Leverage *uint16 `json:"leverage,omitempty"`
 
 	// Price Limit price per unit of base asset as a decimal string. Required for limit orders; must not be sent for market orders.
 	Price *string `json:"price,omitempty"`
@@ -417,9 +400,6 @@ type CreateOrderRequest struct {
 	// QuoteAsset Asset symbol for CeFi (e.g. `USDC`). Optional for DeFi, which resolves the quote asset per chain and ignores any supplied value.
 	QuoteAsset *string `json:"quote_asset,omitempty"`
 
-	// ReduceOnly Marks a perp order as a reduce-only close — it only reduces an existing position and never opens one. Only valid when `chain` is `hypercore-perp`.
-	ReduceOnly *bool `json:"reduce_only,omitempty"`
-
 	// Side The side of the order.
 	// * **buy** — Purchase the base asset using the quote asset.
 	// * **sell** — Sell the base asset in exchange for the quote asset.
@@ -427,7 +407,7 @@ type CreateOrderRequest struct {
 
 	// Type The type of order to place.
 	// * **market** — Execute immediately at the best available price. Buy orders require `qty_unit: quote`. Price must not be specified.
-	// * **limit** — Place an order at a specific price. Requires `price` and `qty_unit: base`. `chain` is optional: omit it for a CeFi limit order, or supply a DeFi chain (e.g. `hypercore-spot`) to rest the order on-chain.
+	// * **limit** — Place an order at a specific price on CeFi. Requires `price` and `qty_unit: base`; omit `chain`.
 	Type OrderType `json:"type"`
 }
 
@@ -636,7 +616,7 @@ type OrderDetail struct {
 
 	// Type The type of order to place.
 	// * **market** — Execute immediately at the best available price. Buy orders require `qty_unit: quote`. Price must not be specified.
-	// * **limit** — Place an order at a specific price. Requires `price` and `qty_unit: base`. `chain` is optional: omit it for a CeFi limit order, or supply a DeFi chain (e.g. `hypercore-spot`) to rest the order on-chain.
+	// * **limit** — Place an order at a specific price on CeFi. Requires `price` and `qty_unit: base`; omit `chain`.
 	Type *OrderType `json:"type,omitempty"`
 
 	// Venue The trading venue to filter by.
@@ -662,7 +642,7 @@ type OrderStatus string
 
 // OrderType The type of order to place.
 // * **market** — Execute immediately at the best available price. Buy orders require `qty_unit: quote`. Price must not be specified.
-// * **limit** — Place an order at a specific price. Requires `price` and `qty_unit: base`. `chain` is optional: omit it for a CeFi limit order, or supply a DeFi chain (e.g. `hypercore-spot`) to rest the order on-chain.
+// * **limit** — Place an order at a specific price on CeFi. Requires `price` and `qty_unit: base`; omit `chain`.
 type OrderType string
 
 // Pagination Cursor-based pagination metadata

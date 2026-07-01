@@ -257,7 +257,7 @@ paths:
         Venue-polymorphic cancel. The `payloads` field is the signal:
         - **CeFi** orders are canceled immediately and return `202 Accepted` with no
           `payloads`. Poll `GET /orders/{id}/status` for the terminal state.
-        - **DeFi** (Hyperliquid) resting orders return `200 OK` with unsigned
+        - **DeFi** resting orders return `200 OK` with unsigned
           `payloads`. Sign each locally and post the signatures to
           `POST /orders/{id}/cancel/execute`.
 
@@ -740,7 +740,7 @@ components:
 
         * **market** — Execute immediately at the best available price. Buy orders require `qty_unit: quote`. Price must not be specified.
 
-        * **limit** — Place an order at a specific price. Requires `price` and `qty_unit: base`. `chain` is optional: omit it for a CeFi limit order, or supply a DeFi chain (e.g. `hypercore-spot`) to rest the order on-chain.
+        * **limit** — Place an order at a specific price on CeFi. Requires `price` and `qty_unit: base`; omit `chain`.
     OrderStatus:
       type: string
       enum: [initialized, pending, cancel_pending, complete, canceled, active, failed]
@@ -773,7 +773,7 @@ components:
         * **api_key** — Signed using an API key. Suitable for programmatic/headless access.
     Chain:
       type: string
-      enum: [solana, base, hypercore-spot, hypercore-perp]
+      enum: [solana, base]
       example: "solana"
       description: >
         The blockchain network for DeFi orders. Omit for CeFi orders.
@@ -781,10 +781,6 @@ components:
         * **solana** — Execute the swap on the Solana blockchain.
 
         * **base** — Execute the swap on the Base (Ethereum L2) blockchain.
-
-        * **hypercore-spot** — Execute the order on the Hyperliquid spot order book.
-
-        * **hypercore-perp** — Execute the order on the Hyperliquid perpetuals order book.
     Venue:
       type: string
       enum: [defi, cefi]
@@ -849,19 +845,13 @@ components:
         **Limit orders** (`type: limit`):
         - `price` is required and must be a positive decimal string
         - `qty_unit` must be `base`
-        - `chain` is optional (omit for CeFi; include a DeFi chain such as `hypercore-spot` to rest the order on-chain)
+        - `chain` must be omitted (CeFi limit order)
 
         **Market orders** (`type: market`):
         - `price` is not accepted
         - Buy orders require `qty_unit: quote`
         - Sell orders accept `qty_unit: base` or `qty_unit: quote`
         - `chain` is optional (omit for CeFi, include for DeFi)
-
-        **Perp orders** (`chain: hypercore-perp`):
-        - `leverage` is required to open a position (buy = long, sell = short) and must be between 1 and 50; it must be omitted for any other chain
-        - `reduce_only: true` marks the order as a close of the opposite position; `leverage` is then ignored
-        - `qty` is the isolated margin to commit; position notional = `qty` × `leverage`
-        - `qty_unit` may be `quote` (margin) or `base` (position size) on either side; the defi service applies the perp sizing rules
       required:
         - base_asset
         - qty
@@ -905,22 +895,6 @@ components:
             - $ref: "#/components/schemas/Chain"
           description: >
             Blockchain network for DeFi orders. Omit for CeFi orders.
-        leverage:
-          type: integer
-          format: uint16
-          minimum: 1
-          maximum: 50
-          description: >
-            Isolated-margin leverage for a perp order. Required when `chain` is
-            `hypercore-perp` and the order opens a position (not reduce-only);
-            must not be sent for any other chain.
-          example: 10
-        reduce_only:
-          type: boolean
-          description: >
-            Marks a perp order as a reduce-only close — it only reduces an existing
-            position and never opens one. Only valid when `chain` is `hypercore-perp`.
-          example: false
     UnsignedPayload:
       type: object
       description: >
