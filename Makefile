@@ -23,8 +23,8 @@ fmt:
 	goimports -w .
 
 generate:
-	oapi-codegen -generate types,client -package client -o pkg/client/client.go api/openapi.yaml
-	oapi-codegen -generate types,client -package conductor -o pkg/conductor/conductor.go api/conductor.yaml
+	oapi-codegen -generate types,client -package deficore -o pkg/deficore/deficore.go api/openapi.yaml
+	oapi-codegen -generate types,client -package client -o pkg/client/client.go api/conductor.yaml
 
 clean:
 	rm -f tm truemarkets

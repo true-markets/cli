@@ -15,7 +15,7 @@ import (
 	"github.com/spf13/cobra"
 	"github.com/tkhq/go-sdk/pkg/apikey"
 
-	"github.com/true-markets/cli/pkg/client"
+	"github.com/true-markets/cli/pkg/deficore"
 )
 
 func newSignupCmd() *cobra.Command {
@@ -107,13 +107,13 @@ func generateAPIKey() (publicKey, privateKey string, err error) {
 func createWalletWithAPIKey(
 	ctx context.Context,
 	host, authToken, publicKey string,
-) ([]client.CreatedWallet, error) {
+) ([]deficore.CreatedWallet, error) {
 	apiClient, err := newAPIClient(host, authToken)
 	if err != nil {
 		return nil, err
 	}
 
-	resp, err := apiClient.CreateWallet(ctx, &client.CreateWalletParams{}, client.CreateWalletJSONRequestBody{
+	resp, err := apiClient.CreateWallet(ctx, &deficore.CreateWalletParams{}, deficore.CreateWalletJSONRequestBody{
 		ApiKey: struct {
 			PublicKey string `json:"public_key"`
 		}{
@@ -137,7 +137,7 @@ func createWalletWithAPIKey(
 		}
 	}
 
-	var result client.WalletCreationResult
+	var result deficore.WalletCreationResult
 	if err := json.Unmarshal(bodyBytes, &result); err != nil {
 		return nil, fmt.Errorf("parse wallet response: %w", err)
 	}

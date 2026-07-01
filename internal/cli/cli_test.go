@@ -15,7 +15,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/true-markets/cli/pkg/client"
-	"github.com/true-markets/cli/pkg/conductor"
+	"github.com/true-markets/cli/pkg/deficore"
 )
 
 func TestNormalizeChain(t *testing.T) {
@@ -92,7 +92,7 @@ func TestFindAsset(t *testing.T) {
 
 	// USDC exists on both chains with distinct ids/addresses — the case that
 	// motivated chain-scoped resolution.
-	assets := []conductor.AssetItem{
+	assets := []client.AssetItem{
 		{Id: &solUSDCID, Symbol: &usdc, Address: &solUSDCAddr, Chain: &sol},
 		{Id: &baseUSDCID, Symbol: &usdc, Address: &baseUSDCAddr, Chain: &base},
 	}
@@ -133,7 +133,7 @@ func TestFilterAssetsByChain(t *testing.T) {
 	base := chainBase
 	addr := "0x1"
 
-	assets := []conductor.AssetItem{
+	assets := []client.AssetItem{
 		{Chain: &sol, Address: &addr},
 		{Chain: &base, Address: &addr},
 		{Chain: nil, Address: &addr},
@@ -160,7 +160,7 @@ func TestFilterBalancesByChain(t *testing.T) {
 	sol := chainSolana
 	base := chainBase
 
-	balances := []conductor.BalanceItem{
+	balances := []client.BalanceItem{
 		{Chain: &sol},
 		{Chain: &base},
 		{Chain: nil},
@@ -384,7 +384,7 @@ func TestSignPayloads(t *testing.T) {
 		})
 
 		t.Run("empty slice", func(t *testing.T) {
-			_, err := signPayloads([]conductor.UnsignedPayload{}, "some-key")
+			_, err := signPayloads([]client.UnsignedPayload{}, "some-key")
 			require.Error(t, err)
 			assert.Contains(t, err.Error(), "no payloads to sign")
 		})
@@ -445,12 +445,12 @@ func TestKeyStore(t *testing.T) {
 }
 
 func TestFetchWhoami(t *testing.T) {
-	decodeWhoami := func(t *testing.T, serverURL string) (*client.ProfileResponse, error) {
+	decodeWhoami := func(t *testing.T, serverURL string) (*deficore.ProfileResponse, error) {
 		t.Helper()
-		cli, err := client.NewClientWithResponses(serverURL)
+		cli, err := deficore.NewClientWithResponses(serverURL)
 		require.NoError(t, err)
 
-		resp, err := cli.GetProfile(context.Background(), &client.GetProfileParams{})
+		resp, err := cli.GetProfile(context.Background(), &deficore.GetProfileParams{})
 		if err != nil {
 			return nil, err
 		}
@@ -460,7 +460,7 @@ func TestFetchWhoami(t *testing.T) {
 			return nil, &CLIError{Code: ExitAPI, Message: "non-200 status"}
 		}
 
-		var profile client.ProfileResponse
+		var profile deficore.ProfileResponse
 		if err := json.NewDecoder(resp.Body).Decode(&profile); err != nil {
 			return nil, err
 		}
@@ -617,8 +617,8 @@ func TestPrintQuotePlain(t *testing.T) {
 	strPtr := func(s string) *string { return &s }
 
 	t.Run("all fields", func(t *testing.T) {
-		order := &conductor.CreateOrderResponseBody{
-			Quote: &conductor.QuoteDetails{
+		order := &client.CreateOrderResponseBody{
+			Quote: &client.QuoteDetails{
 				QtyOut: strPtr("0.02"),
 				Fee:    strPtr("0.01"),
 			},
@@ -636,8 +636,8 @@ func TestPrintQuotePlain(t *testing.T) {
 	})
 
 	t.Run("with issues", func(t *testing.T) {
-		order := &conductor.CreateOrderResponseBody{
-			Quote: &conductor.QuoteDetails{
+		order := &client.CreateOrderResponseBody{
+			Quote: &client.QuoteDetails{
 				QtyOut: strPtr("5.00"),
 				Issues: &[]string{"high price impact", "low liquidity"},
 			},
@@ -687,9 +687,9 @@ func TestBuildQuoteDisplay(t *testing.T) {
 func TestFetchBalances(t *testing.T) {
 	// Mirror the decode path in runBalances: call the Conductor client against a
 	// mock gateway and read the balances from the response body.
-	decodeBalances := func(t *testing.T, serverURL string) ([]conductor.BalanceItem, error) {
+	decodeBalances := func(t *testing.T, serverURL string) ([]client.BalanceItem, error) {
 		t.Helper()
-		cli, err := conductor.NewClientWithResponses(serverURL)
+		cli, err := client.NewClientWithResponses(serverURL)
 		require.NoError(t, err)
 
 		resp, err := cli.GetBalancesWithResponse(context.Background())

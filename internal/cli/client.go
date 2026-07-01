@@ -7,7 +7,7 @@ import (
 	"time"
 
 	"github.com/true-markets/cli/pkg/client"
-	"github.com/true-markets/cli/pkg/conductor"
+	"github.com/true-markets/cli/pkg/deficore"
 )
 
 const (
@@ -45,13 +45,13 @@ func resolveAPIKey(email string) string {
 }
 
 // newAPIClient creates a new API client with the resolved auth token.
-func newAPIClient(host, authToken string) (*client.ClientWithResponses, error) {
+func newAPIClient(host, authToken string) (*deficore.ClientWithResponses, error) {
 	httpClient := newHTTPClient()
 
-	c, err := client.NewClientWithResponses(
+	c, err := deficore.NewClientWithResponses(
 		host,
-		client.WithHTTPClient(httpClient),
-		client.WithRequestEditorFn(func(_ context.Context, req *http.Request) error {
+		deficore.WithHTTPClient(httpClient),
+		deficore.WithRequestEditorFn(func(_ context.Context, req *http.Request) error {
 			setAuthHeaders(req, authToken)
 			q := req.URL.Query()
 			q.Set("version", apiVersion)
@@ -68,13 +68,13 @@ func newAPIClient(host, authToken string) (*client.ClientWithResponses, error) {
 // newConductorClient creates a Conductor gateway client with the resolved auth
 // token. The gateway is reached at host + gatewayPath; unlike the legacy DeFi
 // client it does not inject a `version` query parameter.
-func newConductorClient(host, authToken string) (*conductor.ClientWithResponses, error) {
+func newConductorClient(host, authToken string) (*client.ClientWithResponses, error) {
 	httpClient := newHTTPClient()
 
-	c, err := conductor.NewClientWithResponses(
+	c, err := client.NewClientWithResponses(
 		host+gatewayPath,
-		conductor.WithHTTPClient(httpClient),
-		conductor.WithRequestEditorFn(func(_ context.Context, req *http.Request) error {
+		client.WithHTTPClient(httpClient),
+		client.WithRequestEditorFn(func(_ context.Context, req *http.Request) error {
 			setAuthHeaders(req, authToken)
 			return nil
 		}),

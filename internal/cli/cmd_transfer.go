@@ -12,7 +12,7 @@ import (
 	"github.com/spf13/cobra"
 
 	"github.com/true-markets/cli/internal/cli/output"
-	"github.com/true-markets/cli/pkg/conductor"
+	"github.com/true-markets/cli/pkg/client"
 )
 
 const (
@@ -136,11 +136,11 @@ func executeTransferFlow(cmd *cobra.Command, to, token, amount string) error {
 func outputDryRunTransfer(
 	ctx context.Context,
 	chain, asset, to, qty, qtyUnit string,
-	transfer *conductor.TransferDetail,
+	transfer *client.TransferDetail,
 ) error {
 	if ContextOutputJSON(ctx) {
 		wrapper := struct {
-			*conductor.TransferDetail
+			*client.TransferDetail
 
 			Executed bool `json:"executed"`
 		}{
@@ -157,7 +157,7 @@ func outputDryRunTransfer(
 	return nil
 }
 
-func outputTransferResult(ctx context.Context, transfer *conductor.TransferDetail) error {
+func outputTransferResult(ctx context.Context, transfer *client.TransferDetail) error {
 	if ContextOutputJSON(ctx) {
 		if err := output.WriteJSON(os.Stdout, transfer); err != nil {
 			return fmt.Errorf("write json: %w", err)
@@ -185,19 +185,19 @@ func outputTransferResult(ctx context.Context, transfer *conductor.TransferDetai
 
 func requestCreateTransfer(
 	ctx context.Context,
-	cli *conductor.ClientWithResponses,
+	cli *client.ClientWithResponses,
 	assetID, to, qty, qtyUnit string,
-) (*conductor.TransferDetail, error) {
+) (*client.TransferDetail, error) {
 	uid, err := uuid.Parse(assetID)
 	if err != nil {
 		return nil, fmt.Errorf("invalid asset id %q: %w", assetID, err)
 	}
 
-	reqBody := conductor.CreateTransferRequest{
+	reqBody := client.CreateTransferRequest{
 		AssetId: uid,
 		To:      to,
 		Qty:     qty,
-		QtyUnit: conductor.CreateTransferRequestQtyUnit(qtyUnit),
+		QtyUnit: client.CreateTransferRequestQtyUnit(qtyUnit),
 	}
 
 	resp, err := cli.CreateTransferWithResponse(ctx, reqBody)
@@ -225,13 +225,13 @@ func requestCreateTransfer(
 
 func requestExecuteTransfer(
 	ctx context.Context,
-	cli *conductor.ClientWithResponses,
+	cli *client.ClientWithResponses,
 	transferID uuid.UUID,
 	signatures []string,
-) (*conductor.TransferDetail, error) {
-	reqBody := conductor.ExecuteTransferRequest{
+) (*client.TransferDetail, error) {
+	reqBody := client.ExecuteTransferRequest{
 		Signatures: signatures,
-		AuthType:   conductor.ApiKey,
+		AuthType:   client.ApiKey,
 	}
 
 	resp, err := cli.ExecuteTransferWithResponse(ctx, transferID, reqBody)
@@ -260,7 +260,7 @@ func requestExecuteTransfer(
 	return resp.JSON200, nil
 }
 
-func printTransferPlain(chain, asset, to, qty, qtyUnit string, transfer *conductor.TransferDetail) {
+func printTransferPlain(chain, asset, to, qty, qtyUnit string, transfer *client.TransferDetail) {
 	fmt.Printf("Chain:       %s\n", titleCase(chain))
 	fmt.Printf("Asset:       %s\n", asset)
 	fmt.Printf("To:          %s\n", to)

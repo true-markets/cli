@@ -8,7 +8,7 @@ import (
 	"github.com/spf13/cobra"
 
 	"github.com/true-markets/cli/internal/cli/output"
-	"github.com/true-markets/cli/pkg/conductor"
+	"github.com/true-markets/cli/pkg/client"
 )
 
 func newBalancesCmd() *cobra.Command {
@@ -54,7 +54,7 @@ func runBalances(cmd *cobra.Command, _ []string) error {
 		}
 	}
 
-	var balances []conductor.BalanceItem
+	var balances []client.BalanceItem
 	if resp.JSON200.Data != nil {
 		balances = *resp.JSON200.Data
 	}
@@ -75,7 +75,7 @@ func runBalances(cmd *cobra.Command, _ []string) error {
 	// Serialize the filtered set (not the raw response) so --chain is honored in
 	// JSON output too.
 	if ContextOutputJSON(ctx) {
-		if err := output.WriteJSON(os.Stdout, conductor.ListBalancesResponseBody{Data: &balances}); err != nil {
+		if err := output.WriteJSON(os.Stdout, client.ListBalancesResponseBody{Data: &balances}); err != nil {
 			return fmt.Errorf("write json: %w", err)
 		}
 		return nil
@@ -116,8 +116,8 @@ func runBalances(cmd *cobra.Command, _ []string) error {
 
 // filterDeFiBalances keeps only on-chain (DeFi) balances. The gateway merges in
 // CeFi balances with a null chain, which this DeFi-only CLI does not surface.
-func filterDeFiBalances(balances []conductor.BalanceItem) []conductor.BalanceItem {
-	var filtered []conductor.BalanceItem
+func filterDeFiBalances(balances []client.BalanceItem) []client.BalanceItem {
+	var filtered []client.BalanceItem
 	for _, b := range balances {
 		if b.Chain != nil && *b.Chain != "" {
 			filtered = append(filtered, b)
@@ -126,8 +126,8 @@ func filterDeFiBalances(balances []conductor.BalanceItem) []conductor.BalanceIte
 	return filtered
 }
 
-func filterBalancesByChain(balances []conductor.BalanceItem, chain string) []conductor.BalanceItem {
-	var filtered []conductor.BalanceItem
+func filterBalancesByChain(balances []client.BalanceItem, chain string) []client.BalanceItem {
+	var filtered []client.BalanceItem
 	for _, b := range balances {
 		if b.Chain != nil && strings.EqualFold(*b.Chain, chain) {
 			filtered = append(filtered, b)

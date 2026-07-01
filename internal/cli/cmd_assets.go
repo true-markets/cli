@@ -9,7 +9,7 @@ import (
 	"github.com/spf13/cobra"
 
 	"github.com/true-markets/cli/internal/cli/output"
-	"github.com/true-markets/cli/pkg/conductor"
+	"github.com/true-markets/cli/pkg/client"
 )
 
 const (
@@ -75,9 +75,9 @@ func newAssetsCmd() *cobra.Command {
 	return cmd
 }
 
-func fetchAssetsRaw(ctx context.Context, cli *conductor.ClientWithResponses) ([]conductor.AssetItem, error) {
-	venue := conductor.Defi
-	resp, err := cli.ListAssetsWithResponse(ctx, &conductor.ListAssetsParams{
+func fetchAssetsRaw(ctx context.Context, cli *client.ClientWithResponses) ([]client.AssetItem, error) {
+	venue := client.Defi
+	resp, err := cli.ListAssetsWithResponse(ctx, &client.ListAssetsParams{
 		Venue: &venue,
 	})
 	if err != nil {
@@ -92,8 +92,8 @@ func fetchAssetsRaw(ctx context.Context, cli *conductor.ClientWithResponses) ([]
 	return *resp.JSON200.Data, nil
 }
 
-func filterAssetsByChain(assets []conductor.AssetItem, chain string) []conductor.AssetItem {
-	var filtered []conductor.AssetItem
+func filterAssetsByChain(assets []client.AssetItem, chain string) []client.AssetItem {
+	var filtered []client.AssetItem
 	for _, a := range assets {
 		if a.Chain != nil && strings.EqualFold(*a.Chain, chain) {
 			filtered = append(filtered, a)

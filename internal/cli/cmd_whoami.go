@@ -8,7 +8,7 @@ import (
 	"github.com/spf13/cobra"
 
 	"github.com/true-markets/cli/internal/cli/output"
-	"github.com/true-markets/cli/pkg/client"
+	"github.com/true-markets/cli/pkg/deficore"
 )
 
 func newWhoamiCmd() *cobra.Command {
@@ -34,7 +34,7 @@ func runWhoami(cmd *cobra.Command, _ []string) error {
 		return fmt.Errorf("create client: %w", err)
 	}
 
-	resp, err := cli.GetProfileWithResponse(ctx, &client.GetProfileParams{})
+	resp, err := cli.GetProfileWithResponse(ctx, &deficore.GetProfileParams{})
 	if err != nil {
 		return fmt.Errorf("fetch profile: %w", err)
 	}
@@ -64,7 +64,7 @@ func runWhoami(cmd *cobra.Command, _ []string) error {
 	}
 	fmt.Printf("Email: %s\n", email)
 
-	var wallets []client.Wallet
+	var wallets []deficore.Wallet
 	if profile.Wallets != nil {
 		wallets = *profile.Wallets
 	}

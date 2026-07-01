@@ -11,7 +11,7 @@ import (
 	"github.com/spf13/cobra"
 
 	"github.com/true-markets/cli/internal/cli/output"
-	"github.com/true-markets/cli/pkg/conductor"
+	"github.com/true-markets/cli/pkg/client"
 )
 
 const (
@@ -174,10 +174,10 @@ func executeTradeFlow(cmd *cobra.Command, side, token, amount string) error {
 	return outputTradeResult(ctx, *order.OrderId, execResp, detail, chain)
 }
 
-func outputDryRunQuote(ctx context.Context, order *conductor.CreateOrderResponseBody, display quoteDisplay, side string) error {
+func outputDryRunQuote(ctx context.Context, order *client.CreateOrderResponseBody, display quoteDisplay, side string) error {
 	if ContextOutputJSON(ctx) {
 		wrapper := struct {
-			*conductor.CreateOrderResponseBody
+			*client.CreateOrderResponseBody
 
 			Executed bool `json:"executed"`
 		}{
@@ -201,8 +201,8 @@ func outputDryRunQuote(ctx context.Context, order *conductor.CreateOrderResponse
 func outputTradeResult(
 	ctx context.Context,
 	orderID string,
-	execResp *conductor.ExecuteOrderResponseBody,
-	detail *conductor.OrderDetail,
+	execResp *client.ExecuteOrderResponseBody,
+	detail *client.OrderDetail,
 	chain string,
 ) error {
 	if ContextOutputJSON(ctx) {
@@ -235,9 +235,9 @@ func outputTradeResult(
 // creates a DeFi market order, returning the unsigned payloads and embedded quote.
 func createOrder(
 	ctx context.Context,
-	cli *conductor.ClientWithResponses,
+	cli *client.ClientWithResponses,
 	inputs *quoteInputs,
-) (*conductor.CreateOrderResponseBody, error) {
+) (*client.CreateOrderResponseBody, error) {
 	// Resolve base asset (symbol → contract address if needed), scoped to the
 	// requested chain so a symbol listed on multiple chains resolves to the one
 	// the user asked for.
@@ -257,16 +257,16 @@ func createOrder(
 		baseAddress = strings.TrimSpace(*asset.Address)
 	}
 
-	chainEnum := conductor.Chain(inputs.Chain)
+	chainEnum := client.Chain(inputs.Chain)
 	// quote_asset is intentionally omitted: Conductor resolves and overwrites it
 	// per chain for DeFi orders, ignoring any client value.
-	req := conductor.CreateOrderRequest{
+	req := client.CreateOrderRequest{
 		BaseAsset: baseAddress,
 		Chain:     &chainEnum,
-		Side:      conductor.OrderSide(inputs.OrderSide),
-		Type:      conductor.Market,
+		Side:      client.OrderSide(inputs.OrderSide),
+		Type:      client.Market,
 		Qty:       inputs.Qty,
-		QtyUnit:   conductor.CreateOrderRequestQtyUnit(inputs.QtyUnit),
+		QtyUnit:   client.CreateOrderRequestQtyUnit(inputs.QtyUnit),
 	}
 
 	resp, err := cli.CreateOrderWithResponse(ctx, req)
@@ -295,10 +295,10 @@ func createOrder(
 // executeOrder submits the signed payloads for a created order.
 func executeOrder(
 	ctx context.Context,
-	cli *conductor.ClientWithResponses,
+	cli *client.ClientWithResponses,
 	orderID string,
 	signatures []string,
-) (*conductor.ExecuteOrderResponseBody, error) {
+) (*client.ExecuteOrderResponseBody, error) {
 	if len(signatures) == 0 {
 		return nil, errors.New("missing signatures")
 	}
@@ -306,9 +306,9 @@ func executeOrder(
 		return nil, errors.New("order_id is required")
 	}
 
-	reqBody := conductor.ExecuteOrderRequest{
+	reqBody := client.ExecuteOrderRequest{
 		Signatures: signatures,
-		AuthType:   conductor.ApiKey,
+		AuthType:   client.ApiKey,
 	}
 
 	resp, err := cli.ExecuteOrderWithResponse(ctx, orderID, reqBody)
@@ -340,9 +340,9 @@ func executeOrder(
 // getOrder fetches the full execution detail for an order.
 func getOrder(
 	ctx context.Context,
-	cli *conductor.ClientWithResponses,
+	cli *client.ClientWithResponses,
 	orderID string,
-) (*conductor.OrderDetail, error) {
+) (*client.OrderDetail, error) {
 	resp, err := cli.GetOrderWithResponse(ctx, orderID)
 	if err != nil {
 		return nil, fmt.Errorf("get order: %w", err)
@@ -361,7 +361,7 @@ func isSymbolInput(input string) bool {
 // symbol is matched scoped to chain, because the same symbol can exist on
 // multiple chains (e.g. USDC on both solana and base) with distinct addresses
 // and asset IDs; an address is globally unique, so chain is not consulted.
-func findAsset(input, chain string, assets []conductor.AssetItem) (*conductor.AssetItem, error) {
+func findAsset(input, chain string, assets []client.AssetItem) (*client.AssetItem, error) {
 	if isSymbolInput(input) {
 		for i := range assets {
 			asset := &assets[i]
@@ -407,7 +407,7 @@ func buildQuoteDisplay(inputs quoteInputs) quoteDisplay {
 	return quoteDisplay{Chain: inputs.Chain, PayQty: inputs.Qty, PayLabel: token, RecvLabel: "USDC", FeeLabel: "USDC"}
 }
 
-func printQuotePlain(order *conductor.CreateOrderResponseBody, display quoteDisplay, side string) {
+func printQuotePlain(order *client.CreateOrderResponseBody, display quoteDisplay, side string) {
 	if order == nil {
 		fmt.Println("No quote data")
 		return
