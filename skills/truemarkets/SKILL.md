@@ -136,17 +136,28 @@ tm balances --detailed -o json
 | `--chain`    | _(all)_ | Filter by chain (`solana` or `base`) |
 | `--detailed` | `false` | Include token address and decimals   |
 
+Balances are unified across DeFi and CeFi holdings. Each entry reports `total` (gross), `available` (usable after holds), and `held` amounts.
+
 Example output:
 
 ```json
 {
-  "balances": [
-    { "name": "Solana", "symbol": "SOL", "chain": "solana", "balance": "1.5" },
+  "data": [
+    {
+      "name": "Solana",
+      "symbol": "SOL",
+      "chain": "solana",
+      "total": "1.5",
+      "available": "1.5",
+      "held": "0"
+    },
     {
       "name": "USD Coin",
       "symbol": "USDC",
       "chain": "solana",
-      "balance": "100.00"
+      "total": "100.00",
+      "available": "100.00",
+      "held": "0"
     }
   ]
 }
@@ -155,36 +166,35 @@ Example output:
 ### Buy tokens
 
 ```bash
-# Buy $50 of SOL (amount in quote/USDC by default)
+# Buy $50 of SOL (amount is always in quote/USDC for buys)
 tm buy SOL 50 -o json --dry-run
 
-# Buy 1.5 SOL (amount in base units)
-tm buy SOL 1.5 --qty-unit base -o json --dry-run
+# Buy a token on Base instead of Solana
+tm buy <token> 50 --chain base -o json --dry-run
 ```
 
-| Flag         | Default  | Description                                                  |
-| ------------ | -------- | ------------------------------------------------------------ |
-| `--chain`    | `solana` | Blockchain network (`solana` or `base`)                      |
-| `--qty-unit` | `quote`  | Quantity unit (`base` = token amount, `quote` = USDC amount) |
-| `--dry-run`  | `false`  | Print quote without executing                                |
+| Flag         | Default  | Description                                            |
+| ------------ | -------- | ------------------------------------------------------ |
+| `--chain`    | `solana` | Blockchain network (`solana` or `base`)                |
+| `--qty-unit` | `quote`  | Fixed at `quote` for buys (amount is in USDC)          |
+| `--dry-run`  | `false`  | Print quote without executing                          |
 
-Dry-run output includes `"executed": false`. Live execution returns order ID and transaction hash.
+Buys are always denominated in USDC (`--qty-unit quote`); passing `base` is rejected. Dry-run output includes `"executed": false`. Live execution returns order ID and transaction hash.
 
 ### Sell tokens
 
 ```bash
-# Sell 1.5 SOL (amount in base units by default)
+# Sell 1.5 SOL (amount is always in the token for sells)
 tm sell SOL 1.5 -o json --dry-run
-
-# Sell $50 worth of SOL
-tm sell SOL 50 --qty-unit quote -o json --dry-run
 ```
 
-| Flag         | Default  | Description                                                  |
-| ------------ | -------- | ------------------------------------------------------------ |
-| `--chain`    | `solana` | Blockchain network (`solana` or `base`)                      |
-| `--qty-unit` | `base`   | Quantity unit (`base` = token amount, `quote` = USDC amount) |
-| `--dry-run`  | `false`  | Print quote without executing                                |
+| Flag         | Default  | Description                                            |
+| ------------ | -------- | ------------------------------------------------------ |
+| `--chain`    | `solana` | Blockchain network (`solana` or `base`)                |
+| `--qty-unit` | `base`   | Fixed at `base` for sells (amount is in the token)     |
+| `--dry-run`  | `false`  | Print quote without executing                          |
+
+Sells are always denominated in the token (`--qty-unit base`); passing `quote` is rejected.
 
 ### Transfer tokens
 
@@ -192,8 +202,8 @@ tm sell SOL 50 --qty-unit quote -o json --dry-run
 # Preview transfer
 tm transfer <address> SOL 1.5 -o json --dry-run
 
-# Execute transfer (--force required)
-tm transfer <address> SOL 1.5 -o json --force
+# Execute transfer (--force required); use --chain to disambiguate multi-chain tokens
+tm transfer <address> USDC 100 --chain base -o json --force
 ```
 
 | Flag         | Default  | Description                                                  |
@@ -202,6 +212,8 @@ tm transfer <address> SOL 1.5 -o json --force
 | `--qty-unit` | `base`   | Quantity unit (`base` = token amount, `quote` = USDC amount) |
 | `--dry-run`  | `false`  | Print transfer details without executing                     |
 | `--force`    | `false`  | Execute without confirmation (required for JSON mode)        |
+
+For a token symbol that exists on multiple chains (e.g. USDC), `--chain` selects which one; a contract address resolves unambiguously on its own.
 
 ### Onramp (deposit USD → USDC)
 
