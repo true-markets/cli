@@ -10,7 +10,7 @@ import (
 	"github.com/spf13/cobra"
 
 	"github.com/true-markets/cli/internal/cli/output"
-	"github.com/true-markets/cli/pkg/client"
+	"github.com/true-markets/cli/pkg/deficore"
 )
 
 func newOnrampCmd() *cobra.Command {
@@ -48,8 +48,8 @@ func runOnramp(cmd *cobra.Command, args []string) error {
 	}
 
 	// Request onramp URL from backend.
-	paymentMethod := client.CARD
-	onrampResp, err := cli.CreateOnrampWithResponse(ctx, &client.CreateOnrampParams{}, client.OnrampRequest{
+	paymentMethod := deficore.CARD
+	onrampResp, err := cli.CreateOnrampWithResponse(ctx, &deficore.CreateOnrampParams{}, deficore.OnrampRequest{
 		Chain:         "solana",
 		Amount:        amount,
 		PaymentMethod: paymentMethod,

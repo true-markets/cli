@@ -1,0 +1,1451 @@
+# Vendored from celeritas: backend/services/conductor/spec/openapi.yaml
+# Sanitized for oapi-codegen (no OpenAPI 3.1 support): `type: [string, "null"]`
+# unions and the `oneOf`-with-null cursor were rewritten to plain types, and
+# response schemas colliding with operation wrapper names (e.g. CreateOrderResponse)
+# were suffixed with `Body`. Re-apply these edits when refreshing from upstream.
+openapi: 3.1.0
+info:
+  title: True Markets Gateway API
+  description: |
+    Gateway API for the True Markets trading platform — unified order orchestration, quotes, transfers, and balance management across CeFi and DeFi venues. Recommended for most integrations.
+
+    ## Base URLs
+
+    | Environment | Base URL |
+    |---|---|
+    | Production | `https://api.truemarkets.co/v1/gateway` |
+    | UAT (sandbox) | `https://api.uat.truemarkets.co/v1/gateway` |
+
+    > The legacy `/v1/conductor` base path continues to work for existing integrations but is deprecated — new integrations should use `/v1/gateway`.
+
+    > UAT is the testing environment. It may require VPN/allowlist access for some integrations — contact [support@truemarkets.co](mailto:support@truemarkets.co) if requests time out from a public network.
+
+    ## Authentication
+
+    All endpoints require a JWT access token in the `Authorization: Bearer <token>` header.
+
+    ### Getting credentials
+
+    1. **Create an account** at [https://www.truemarkets.co](https://www.truemarkets.co) (passkey, email, magic link, or Sign in with Apple).
+    2. **Register an API key** in your account's *API Keys* settings page. Generate an EC P-256 key pair locally and submit only the public key — the private key never leaves your machine. You'll receive a `key_id` (UUID).
+    3. **Mint JWTs** by calling `POST /v1/auth/api-key/token` with `key_id`, a current `timestamp` (Unix seconds, within ±30s of server UTC time), and `signature` — an ES256 (ECDSA P-256 + SHA-256) signature of the message `{key_id}.{timestamp}`, base64url-encoded. The response returns `access_token` and `refresh_token`.
+    4. **Call the Gateway** with `Authorization: Bearer <access_token>`.
+    5. **Refresh** expired access tokens via `POST /v1/auth/token/refresh` with the `refresh_token` — no re-signing required.
+
+    ### Quick start
+
+    ```bash
+    # Mint a JWT
+    curl -X POST https://api.truemarkets.co/v1/auth/api-key/token \
+      -H "Content-Type: application/json" \
+      -d '{"key_id":"<UUID>","timestamp":<UNIX_SECONDS>,"signature":"<BASE64URL_ES256_SIG>"}'
+
+    # Compute a quote
+    curl -X POST https://api.truemarkets.co/v1/gateway/quotes \
+      -H "Authorization: Bearer <ACCESS_TOKEN>" \
+      -H "Content-Type: application/json" \
+      -d '{"base":"BTC","quote":"USD","side":"buy","quantity":"0.01"}'
+    ```
+
+    > Need to trade on a CeFi venue directly? CeFi direct FIX/REST/WS is institutional only — see the [CeFi Direct REST API](/apis/cefi-direct/rest/v1) reference. Retail traders reach CeFi via this Gateway, which proxies and signs the upstream HMAC for you.
+
+    ## Order lifecycle
+
+    Orders move through a small set of statuses. The path depends on whether the venue and order type require client-side signing.
+
+    1. **Create** — `POST /orders` with your trade params. The response always returns an `order_id` and a `status`.
+    2. **Sign and execute** — for DeFi orders and CeFi buy orders that need a funding bridge, the create response returns `status: initialized` along with an array of unsigned `payloads`. Sign each payload locally with your private key and post the signatures to `POST /orders/{id}/execute`. The order then moves to `pending`.
+    3. **Submitted directly** — for CeFi sell orders and sufficiently funded CeFi buy orders, the create response already returns `status: pending` with no `payloads`. The execute step is skipped.
+    4. **Settle** — the order transitions out of `pending` to one of:
+        - `complete` — fully filled.
+        - `active` — limit order resting in the order book (can later move to `complete` or `canceled`).
+        - `canceled` — canceled by the user or rejected by exchange/market conditions.
+        - `failed` — rejected by the exchange or DeFi execution reverted.
+
+    Poll `GET /orders/{id}/status` (or list orders) to track progression. The `payloads` field in the create response is the signal: if it's non-empty, you need to sign and call execute; if it's empty or absent, the order is already submitted.
+
+    ## Support
+    - 📧 [support@truemarkets.co](mailto:support@truemarkets.co)
+  version: "1.0.0"
+servers:
+  - url: https://api.truemarkets.co/v1/gateway
+    description: Production
+  - url: https://api.uat.truemarkets.co/v1/gateway
+    description: UAT (sandbox)
+tags:
+  - name: Quotes
+    description: Request real-time market quotes for trading pairs without creating an order.
+  - name: Orders
+    description: Create, execute, cancel, and monitor orders across CeFi and DeFi.
+  - name: Transfers
+    description: Create, execute, and monitor transfers across CeFi and DeFi.
+  - name: Assets
+    description: Browse the unified catalog of tradeable assets across DeFi and CeFi venues.
+  - name: Balances
+    description: Query account balances for the authenticated user.
+paths:
+  # ==================== QUOTE ENDPOINTS ====================
+  /quotes:
+    post:
+      operationId: computeQuote
+      summary: Compute market quote (CeFi only)
+      description: >
+        Non-binding price preview for a CeFi market order. For DeFi, the quote is
+        returned by `POST /orders` (see `CreateOrderResponse.quote`).
+      tags:
+        - Quotes
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/QuoteRequest"
+      responses:
+        "200":
+          description: Quote computed successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/QuoteResponse"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "500":
+          $ref: "#/components/responses/InternalError"
+        "503":
+          $ref: "#/components/responses/ServiceUnavailable"
+  # ==================== ORDER ENDPOINTS ====================
+  /orders:
+    post:
+      operationId: createOrder
+      summary: Create new order
+      description: Creates a new order. For DeFi orders, returns unsigned payloads for client signing.
+      tags:
+        - Orders
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateOrderRequest"
+      responses:
+        "201":
+          description: Order created successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CreateOrderResponseBody"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/InternalError"
+        "503":
+          $ref: "#/components/responses/ServiceUnavailable"
+    get:
+      operationId: listOrders
+      summary: List user orders
+      description: >
+        Returns a paginated list of the authenticated user's orders with execution data.
+        All statuses are returned by default; narrow the results with the `status` query parameter.
+      tags:
+        - Orders
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: limit
+          in: query
+          description: Maximum number of orders to return
+          required: false
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 50
+        - name: cursor
+          in: query
+          description: RFC3339 timestamp cursor for pagination
+          required: false
+          schema:
+            type: string
+            format: date-time
+        - name: status
+          in: query
+          description: Comma-separated list of order statuses to filter by
+          required: false
+          schema:
+            type: string
+            example: "pending,canceled"
+        - name: venue
+          in: query
+          description: >
+            Comma-separated list of trading venues to filter by (`defi`, `cefi`).
+            Defaults to all venues (`cefi,defi`) when omitted.
+          required: false
+          schema:
+            type: string
+            default: "cefi,defi"
+            example: "cefi,defi"
+      responses:
+        "200":
+          description: Orders retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/GetOrdersResponse"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "500":
+          $ref: "#/components/responses/InternalError"
+  /orders/{id}/execute:
+    post:
+      operationId: executeOrder
+      summary: Execute pending order
+      description: Executes a pending order using client-provided signatures for the unsigned payloads
+      tags:
+        - Orders
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          description: Order ID
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ExecuteOrderRequest"
+      responses:
+        "200":
+          description: Order execution initiated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ExecuteOrderResponseBody"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "409":
+          $ref: "#/components/responses/Conflict"
+        "500":
+          $ref: "#/components/responses/InternalError"
+        "503":
+          $ref: "#/components/responses/ServiceUnavailable"
+  /orders/{id}/cancel:
+    post:
+      operationId: prepareCancelOrder
+      summary: Cancel a limit order (CeFi or DeFi)
+      description: |
+        Venue-polymorphic cancel. The `payloads` field is the signal:
+        - **CeFi** orders are canceled immediately and return `202 Accepted` with no
+          `payloads`. Poll `GET /orders/{id}/status` for the terminal state.
+        - **DeFi** resting orders return `200 OK` with unsigned
+          `payloads`. Sign each locally and post the signatures to
+          `POST /orders/{id}/cancel/execute`.
+
+        Only cancellable orders (CeFi `pending`/`active`, DeFi `active`) can be
+        canceled; others return 400.
+      tags:
+        - Orders
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          description: Order ID
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Resting DeFi order; unsigned cancel payloads to sign and execute
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CancelOrderResponseBody"
+        "202":
+          description: CeFi cancel accepted; poll order status for the terminal state
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/InternalError"
+        "503":
+          $ref: "#/components/responses/ServiceUnavailable"
+  /orders/{id}/cancel/execute:
+    post:
+      operationId: executeCancelOrder
+      summary: Execute a resting DeFi limit order cancellation
+      description: |
+        Submits the client's signatures over the payloads returned by
+        `POST /orders/{id}/cancel` to cancel a resting DeFi limit order.
+        The order moves to `canceled` once the venue confirms.
+      tags:
+        - Orders
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          description: Order ID
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ExecuteOrderRequest"
+      responses:
+        "200":
+          description: Cancellation submitted
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ExecuteOrderResponseBody"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "409":
+          $ref: "#/components/responses/Conflict"
+        "500":
+          $ref: "#/components/responses/InternalError"
+        "503":
+          $ref: "#/components/responses/ServiceUnavailable"
+  /orders/{id}:
+    get:
+      operationId: getOrder
+      tags:
+        - Orders
+      summary: Get a single order
+      description: Returns full execution details for an order owned by the authenticated user.
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          description: Order ID
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Order retrieved
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/OrderDetail"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/InternalError"
+    delete:
+      operationId: cancelOrder
+      deprecated: true
+      tags:
+        - Orders
+      summary: Cancel a pending limit order (CeFi)
+      description: |
+        Deprecated: use `POST /orders/{id}/cancel`, the venue-polymorphic entry.
+
+        Accepts a CeFi limit-order cancel and returns `202 Accepted`. Poll
+        `GET /orders/{id}/status` for the terminal state (`canceled`, or `complete`
+        if it filled before the cancel landed).
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          description: Order ID
+          required: true
+          schema:
+            type: string
+      responses:
+        "202":
+          description: Cancellation request accepted
+          content:
+            application/json:
+              schema:
+                type: object
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/InternalError"
+    patch:
+      operationId: modifyOrder
+      tags:
+        - Orders
+      summary: Modify an active limit order
+      description: |
+        Changes the price and/or quantity of an active CeFi limit order. The change
+        is asynchronous: the order's stored price and quantity update once the
+        exchange confirms the modification. Only active limit orders are modifiable.
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          description: Order ID
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ModifyOrderRequest"
+      responses:
+        "202":
+          description: Modification request accepted
+          content:
+            application/json:
+              schema:
+                type: object
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/InternalError"
+        "503":
+          $ref: "#/components/responses/ServiceUnavailable"
+  /orders/{id}/status:
+    get:
+      operationId: getOrderStatus
+      summary: Get order status
+      description: Returns the current status of an order
+      tags:
+        - Orders
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          description: Order ID
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Order status retrieved
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/GetOrderStatusResponseBody"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/InternalError"
+  /transfers:
+    post:
+      operationId: createTransfer
+      summary: Create new transfer
+      description: Creates a new on-chain transfer. Returns unsigned payloads for the client to sign before executing.
+      tags:
+        - Transfers
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateTransferRequest"
+      responses:
+        "201":
+          description: Transfer created successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TransferDetail"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+    get:
+      operationId: listTransfers
+      summary: List user transfers
+      description: Returns a paginated list of transfers for the authenticated user
+      tags:
+        - Transfers
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: status
+          in: query
+          description: Filter by transfer status
+          required: false
+          schema:
+            $ref: "#/components/schemas/TransferStatus"
+        - name: cursor
+          in: query
+          description: Pagination cursor
+          required: false
+          schema:
+            type: string
+        - name: limit
+          in: query
+          description: Maximum number of transfers to return
+          required: false
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 50
+      responses:
+        "200":
+          description: Transfers retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ListTransfersResponseBody"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+  /transfers/{id}/execute:
+    post:
+      operationId: executeTransfer
+      summary: Execute pending transfer
+      description: Executes a transfer in `awaiting_signature` status using client-provided signatures
+      tags:
+        - Transfers
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          description: Transfer ID (UUID)
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ExecuteTransferRequest"
+      responses:
+        "200":
+          description: Transfer execution initiated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TransferDetail"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "409":
+          $ref: "#/components/responses/Conflict"
+  /transfers/{id}:
+    get:
+      operationId: getTransfer
+      summary: Get transfer by ID
+      description: Returns the current state of a transfer
+      tags:
+        - Transfers
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          description: Transfer ID (UUID)
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: Transfer retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TransferDetail"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
+  # ==================== ASSET ENDPOINTS ====================
+  /assets:
+    get:
+      operationId: listAssets
+      tags:
+        - Assets
+      summary: List tradeable assets
+      description: Returns a unified catalog of all active tradeable assets across DeFi and CeFi venues
+      security: []
+      parameters:
+        - name: venue
+          in: query
+          description: Filter by trading venue
+          required: false
+          schema:
+            $ref: "#/components/schemas/Venue"
+      responses:
+        "200":
+          description: Assets retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ListAssetsResponseBody"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "500":
+          $ref: "#/components/responses/InternalError"
+  # ==================== BALANCE ENDPOINTS ====================
+  /balances/unified:
+    get:
+      operationId: listBalances
+      tags:
+        - Balances
+      summary: List balances
+      description: Returns unified balances across CeFi and DeFi for the authenticated user
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: Balances retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ListBalancesResponseBody"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+  /balances:
+    get:
+      operationId: getBalances
+      summary: Get user balances
+      description: Returns unified balances across CeFi and DeFi for the authenticated user
+      tags:
+        - Balances
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: Balances retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ListBalancesResponseBody"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+  responses:
+    BadRequest:
+      description: Bad request
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorResponse"
+    Unauthorized:
+      description: Unauthorized
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorResponse"
+    Forbidden:
+      description: Forbidden
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorResponse"
+    NotFound:
+      description: Not found
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorResponse"
+    Conflict:
+      description: Conflict
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorResponse"
+    InternalError:
+      description: Internal server error
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorResponse"
+    ServiceUnavailable:
+      description: Service unavailable
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorResponse"
+  schemas:
+    OrderSide:
+      type: string
+      enum: [buy, sell]
+      example: "buy"
+      description: >
+        The side of the order.
+
+        * **buy** — Purchase the base asset using the quote asset.
+
+        * **sell** — Sell the base asset in exchange for the quote asset.
+    OrderType:
+      type: string
+      enum: [market, limit]
+      example: "market"
+      description: >
+        The type of order to place.
+
+        * **market** — Execute immediately at the best available price. Buy orders require `qty_unit: quote`. Price must not be specified.
+
+        * **limit** — Place an order at a specific price on CeFi. Requires `price` and `qty_unit: base`; omit `chain`.
+    OrderStatus:
+      type: string
+      enum: [initialized, pending, cancel_pending, complete, canceled, active, failed]
+      example: "complete"
+      description: >
+        The current status of the order.
+
+        * **initialized** — Order has been created but not yet submitted. For DeFi orders, the client must sign the returned payloads and call the execute endpoint. For CeFi buy orders with insufficient balance, a funding bridge is prepared first.
+
+        * **pending** — Order has been submitted but is not yet confirmed by the CeFi exchange or on-chain.
+
+        * **active** — Order was accepted by the CeFi exchange and is open for trading. Applies to limit orders that are working in the order book.
+
+        * **cancel_pending** — A cancellation request has been sent to the CeFi exchange and is awaiting confirmation.
+
+        * **complete** — Order has been fully executed. For CeFi orders this means the CeFi exchange reported a fill; for DeFi orders the on-chain swap was confirmed.
+
+        * **canceled** — Order was successfully canceled via a cancel request or by exchange/market conditions.
+
+        * **failed** — Order was rejected by the CeFi exchange or DeFi execution failed (e.g. on-chain transaction reverted, balance check failed).
+    SigningMethod:
+      type: string
+      enum: [web_authn, api_key]
+      example: "api_key"
+      description: >
+        The authentication method used to sign transaction payloads.
+
+        * **web_authn** — Signed using a passkey (WebAuthn/FIDO2 credential) via the browser.
+
+        * **api_key** — Signed using an API key. Suitable for programmatic/headless access.
+    Chain:
+      type: string
+      enum: [solana, base]
+      example: "solana"
+      description: >
+        The blockchain network for DeFi orders. Omit for CeFi orders.
+
+        * **solana** — Execute the swap on the Solana blockchain.
+
+        * **base** — Execute the swap on the Base (Ethereum L2) blockchain.
+    Venue:
+      type: string
+      enum: [defi, cefi]
+      example: "defi"
+      description: >
+        The trading venue to filter by.
+
+        * **defi** — Decentralized exchange (on-chain swaps).
+
+        * **cefi** — Centralized exchange (off-chain order book).
+    QuoteRequest:
+      type: object
+      description: Request to compute a market quote
+      required:
+        - base_asset
+        - quote_asset
+        - qty
+        - qty_unit
+        - side
+      properties:
+        base_asset:
+          type: string
+          description: Base asset identifier (e.g. `BTC`, `ETH`, `SOL`)
+          example: "BTC"
+        quote_asset:
+          type: string
+          description: Quote asset identifier (e.g. `USD`, `USDC`)
+          example: "USD"
+        qty:
+          type: string
+          description: Quantity as a positive decimal string
+          example: "0.5"
+        qty_unit:
+          type: string
+          enum: [base, quote]
+          description: >
+            Unit of the quantity.
+
+            * **base** — Quantity is denominated in the base asset (e.g. 0.5 BTC).
+
+            * **quote** — Quantity is denominated in the quote asset (e.g. 1000 USD).
+          example: "quote"
+        side:
+          $ref: "#/components/schemas/OrderSide"
+    QuoteResponse:
+      type: object
+      description: Quote computation result with the expected output quantity and execution price
+      properties:
+        qty:
+          type: string
+          description: Expected output quantity as a decimal string. For a buy order this is the amount of base asset received; for a sell order it is the amount of quote asset received.
+          example: "0.01485"
+        price:
+          type: string
+          description: Effective execution price per unit of base asset as a decimal string
+          example: "67340.25"
+    CreateOrderRequest:
+      type: object
+      description: |
+        Request to create a new order.
+
+        **Limit orders** (`type: limit`):
+        - `price` is required and must be a positive decimal string
+        - `qty_unit` must be `base`
+        - `chain` must be omitted (CeFi limit order)
+
+        **Market orders** (`type: market`):
+        - `price` is not accepted
+        - Buy orders require `qty_unit: quote`
+        - Sell orders accept `qty_unit: base` or `qty_unit: quote`
+        - `chain` is optional (omit for CeFi, include for DeFi)
+      required:
+        - base_asset
+        - qty
+        - qty_unit
+        - type
+        - side
+      properties:
+        base_asset:
+          type: string
+          description: Asset symbol for CeFi (e.g. `BTC`); token contract address on `chain` for DeFi.
+          example: "BTC"
+        quote_asset:
+          type: string
+          description: Asset symbol for CeFi (e.g. `USDC`). Optional for DeFi, which resolves the quote asset per chain and ignores any supplied value.
+          example: "USD"
+        qty:
+          type: string
+          description: Quantity as a positive decimal string
+          example: "100"
+        price:
+          type: string
+          description: >
+            Limit price per unit of base asset as a decimal string. Required for limit orders; must not be sent for market orders.
+          example: "67500.00"
+        qty_unit:
+          type: string
+          enum: [base, quote]
+          description: >
+            Unit of the quantity.
+
+            * **base** — Quantity is denominated in the base asset. Required for limit orders. Supported for market sell orders.
+
+            * **quote** — Quantity is denominated in the quote asset. Required for market buy orders. For DeFi sell orders, `base` must be used instead.
+          example: "quote"
+        type:
+          $ref: "#/components/schemas/OrderType"
+        side:
+          $ref: "#/components/schemas/OrderSide"
+        chain:
+          allOf:
+            - $ref: "#/components/schemas/Chain"
+          description: >
+            Blockchain network for DeFi orders. Omit for CeFi orders.
+    UnsignedPayload:
+      type: object
+      description: >
+        An unsigned transaction payload that the client must sign before executing the order.
+        Sign each payload using your API key or WebAuthn credential, then submit the
+        resulting stamps to the execute endpoint in the same order.
+      required:
+        - digest
+        - payload
+      properties:
+        digest:
+          type: string
+          description: SHA-256 hash of the payload, used as the signing input
+        payload:
+          type: string
+          description: Base64-encoded transaction payload to be signed
+    QuoteDetails:
+      type: object
+      description: Detailed quote information returned with DeFi order creation, showing expected swap output and fees
+      properties:
+        base_asset:
+          type: string
+          description: Base asset identifier (e.g. `SOL`, `ETH`)
+        quote_asset:
+          type: string
+          description: Quote asset identifier (e.g. `USDC`)
+        qty:
+          type: string
+          description: Input quantity as a decimal string — the amount being swapped from
+        qty_out:
+          type: string
+          description: Expected output quantity as a decimal string — the amount the user will receive after fees
+        fee:
+          type: string
+          description: Platform fee amount as a decimal string
+        fee_asset:
+          type: string
+          description: Asset in which the fee is denominated (e.g. `USDC`)
+        issues:
+          type: array
+          items:
+            type: string
+          description: Warnings about the quote (e.g. high price impact, low liquidity). Empty when there are no issues.
+    CreateOrderResponseBody:
+      type: object
+      description: >
+        Response from creating an order. For DeFi orders (and CeFi buy orders requiring a funding bridge),
+        the response includes unsigned payloads that must be signed by the client and submitted
+        via the execute endpoint. For CeFi sell orders and sufficiently funded CeFi buy orders,
+        the order is submitted immediately and no payloads are returned.
+      properties:
+        order_id:
+          type: string
+          description: Unique order identifier
+        status:
+          $ref: "#/components/schemas/OrderStatus"
+        payloads:
+          type: array
+          items:
+            $ref: "#/components/schemas/UnsignedPayload"
+          description: >
+            Unsigned transaction payloads that the client must sign and return via the execute endpoint.
+            Present for DeFi orders and CeFi buy orders that require a funding bridge.
+            Empty or absent when the order is submitted immediately (e.g. CeFi sell orders).
+        quote:
+          $ref: "#/components/schemas/QuoteDetails"
+          description: DeFi orders only. For CeFi price previews, use `POST /quotes`.
+        web_authn_payload:
+          type: string
+          description: WebAuthn payload (deprecated, use payloads instead)
+          deprecated: true
+    ExecuteOrderRequest:
+      type: object
+      description: >
+        Request to execute an order that is in `initialized` status.
+        The client must sign each payload returned by the create endpoint
+        and submit the signatures in the same order.
+      required:
+        - signatures
+        - auth_type
+      properties:
+        signatures:
+          type: array
+          items:
+            type: string
+          minItems: 1
+          description: >
+            Signed stamps for the unsigned payloads, in the same order as the payloads
+            returned by the create endpoint. Each signature corresponds to one payload.
+        auth_type:
+          $ref: "#/components/schemas/SigningMethod"
+    ExecuteOrderResponseBody:
+      type: object
+      description: >
+        Response from executing an order. For DeFi orders, a successful execution
+        transitions the order directly to `complete`. For CeFi orders, the order
+        moves to `pending` while it is processed by the CeFi exchange.
+      properties:
+        status:
+          $ref: "#/components/schemas/OrderStatus"
+    CancelOrderResponseBody:
+      type: object
+      description: >
+        Response from the cancel endpoint. A resting DeFi order returns unsigned
+        payloads the client must sign and submit to the cancel-execute endpoint.
+        A CeFi order is canceled immediately and returns 202 with no payloads.
+      properties:
+        payloads:
+          type: array
+          items:
+            $ref: "#/components/schemas/UnsignedPayload"
+          description: >
+            Unsigned cancel payloads the client signs and returns via the cancel-execute
+            endpoint. Present for resting DeFi orders, absent for CeFi orders.
+    ModifyOrderRequest:
+      type: object
+      description: >
+        Request to modify an active limit order. At least one of `price` or `qty`
+        must be supplied; any field that is omitted is left unchanged.
+      properties:
+        price:
+          type: string
+          description: New limit price per unit of base asset as a positive decimal string.
+          example: "67500.00"
+        qty:
+          type: string
+          description: New quantity as a positive decimal string.
+          example: "0.5"
+    GetOrderStatusResponseBody:
+      type: object
+      description: Order status response
+      properties:
+        status:
+          $ref: "#/components/schemas/OrderStatus"
+    OrderDetail:
+      type: object
+      description: >
+        Order with execution data, returned by the list-orders and get-order endpoints
+        for orders of any status. Includes fill information from the CeFi exchange for CeFi orders.
+      properties:
+        order_id:
+          type: string
+          description: Unique order identifier
+        base_asset:
+          type: string
+          description: Base asset identifier (e.g. `BTC`, `ETH`, `SOL`)
+        quote_asset:
+          type: string
+          description: Quote asset identifier (e.g. `USD`, `USDC`)
+        type:
+          $ref: "#/components/schemas/OrderType"
+        side:
+          $ref: "#/components/schemas/OrderSide"
+        price:
+          type: string
+          description: >
+            For limit orders, the limit price submitted. For market orders, the reference price at order creation. Null when no price was recorded.
+        qty:
+          type: string
+          description: Original order quantity in the denomination specified by `qty_unit` at creation
+        executed_qty:
+          type: string
+          description: Quantity of the base asset that has been filled so far
+        leaves_qty:
+          type: string
+          description: Remaining base asset quantity yet to be filled. Zero when the order is complete.
+        executed_vwap:
+          type: string
+          description: Volume-weighted average price across all fills for this order
+        fee:
+          type: string
+          description: >
+            Total fee charged for this order in the quote asset. For CeFi orders this is the
+            cumulative `trade_fee` across all fills; for DeFi orders it is the service fee
+            captured at quote time, written once on confirmation.
+        tx_hash:
+          type: string
+          description: On-chain transaction hash for DeFi orders. Omitted for CeFi orders.
+        venue:
+          $ref: "#/components/schemas/Venue"
+        status:
+          $ref: "#/components/schemas/OrderStatus"
+        created_at:
+          type: string
+          format: date-time
+          description: Timestamp when the order was created (RFC 3339)
+    Pagination:
+      type: object
+      description: Cursor-based pagination metadata
+      properties:
+        next_cursor:
+          type: string
+          format: date-time
+          description: RFC3339 timestamp cursor for next page, null if no more data
+        limit:
+          type: integer
+          description: Number of items per page
+    GetOrdersResponse:
+      type: object
+      description: Paginated list of orders with execution data
+      properties:
+        data:
+          type: array
+          items:
+            $ref: "#/components/schemas/OrderDetail"
+          description: List of orders
+        pagination:
+          $ref: "#/components/schemas/Pagination"
+    ListBalancesResponseBody:
+      type: object
+      description: Unified balances across CeFi and DeFi venues
+      properties:
+        data:
+          type: array
+          items:
+            $ref: "#/components/schemas/BalanceItem"
+          description: List of asset balances
+    BalanceItem:
+      type: object
+      description: A single asset balance on a specific venue
+      properties:
+        symbol:
+          type: string
+          description: Asset ticker symbol (e.g. BTC, USDC)
+        name:
+          type: string
+          description: Human-readable asset name
+        chain:
+          type: string
+          description: Blockchain network ("solana", "base"), or null for exchange-held assets
+        address:
+          type: string
+          description: Token contract/mint address, or null for exchange-held assets
+        decimals:
+          type: integer
+          description: Display precision (e.g. 8 for BTC, 6 for USDC)
+        total:
+          type: string
+          description: Gross balance including held amounts (decimal string)
+        available:
+          type: string
+          description: Usable balance after holds (decimal string)
+        held:
+          type: string
+          description: Amount locked in orders or transfers (decimal string)
+        stable:
+          type: boolean
+          description: Whether this is a stablecoin
+        tradeable:
+          type: boolean
+          description: Whether this asset is active for trading
+    AssetImage:
+      type: object
+      description: Asset image URLs at various resolutions
+      properties:
+        thumb:
+          type: string
+        small:
+          type: string
+        large:
+          type: string
+    AssetMarketData:
+      type: object
+      description: Supply-side market data
+      properties:
+        circulating_supply:
+          type: integer
+          format: int64
+        total_supply:
+          type: integer
+          format: int64
+        max_supply:
+          type: integer
+          format: int64
+    AssetSocials:
+      type: object
+      description: Social media links
+      properties:
+        x_username:
+          type: string
+        facebook_username:
+          type: string
+        subreddit_url:
+          type: string
+        official_forum_url:
+          type: string
+    AssetNetwork:
+      type: object
+      description: >
+        A deposit/withdrawal network supported for a CeFi asset, together with any additional
+        networks whose deposits route to the same address. This is the source of truth for the
+        `network` field when creating a CeFi transfer via [`createTransfer`](#operation/createTransfer):
+        that field must match this `network` or one of its `compatible_networks` (case-insensitive).
+      required: [network, compatible_networks]
+      properties:
+        network:
+          type: string
+          description: Canonical network name for this deposit/withdrawal rail (e.g. `bitcoin`).
+          example: "bitcoin"
+        compatible_networks:
+          type: array
+          items:
+            type: string
+          description: >
+            Additional network names whose deposits route to the same address as `network`,
+            including `network` itself. Any of these is an accepted `network` value for a CeFi transfer.
+    AssetItem:
+      type: object
+      description: A single tradeable asset
+      required:
+        - networks
+      properties:
+        id:
+          type: string
+          description: Canonical asset identifier (spot_assets UUID)
+        chain:
+          type: string
+          description: Blockchain network (null for CeFi assets)
+        address:
+          type: string
+          description: Token contract address (null for CeFi assets)
+        symbol:
+          type: string
+          description: Asset ticker symbol (e.g. BTC, SOL)
+        name:
+          type: string
+          description: Human-readable asset name
+        decimals:
+          type: integer
+          minimum: 0
+          maximum: 255
+          description: Token decimal precision
+        slug:
+          type: string
+          description: URL-safe asset identifier
+        is_active:
+          type: boolean
+        description:
+          type: string
+        website:
+          type: string
+        icon:
+          type: string
+          description: Icon image URL
+        tradeable:
+          type: boolean
+          description: Whether this asset can be traded directly
+        stable:
+          type: boolean
+          description: Whether this is a stablecoin
+        venue:
+          $ref: "#/components/schemas/Venue"
+        image:
+          $ref: "#/components/schemas/AssetImage"
+        market_data:
+          $ref: "#/components/schemas/AssetMarketData"
+        socials:
+          $ref: "#/components/schemas/AssetSocials"
+        networks:
+          type: array
+          items:
+            $ref: "#/components/schemas/AssetNetwork"
+    ListAssetsResponseBody:
+      type: object
+      description: Paginated list of tradeable assets
+      properties:
+        data:
+          type: array
+          items:
+            $ref: "#/components/schemas/AssetItem"
+        pagination:
+          $ref: "#/components/schemas/Pagination"
+    TransferStatus:
+      type: string
+      enum: [awaiting_signature, pending, completed, failed]
+      example: "pending"
+      description: >
+        The current status of the transfer.
+
+        * **awaiting_signature** — Transfer has been created and is waiting for the client to sign the unsigned payloads and call the execute endpoint.
+
+        * **pending** — Signed transaction has been submitted and is awaiting on-chain confirmation.
+
+        * **completed** — Transfer has been confirmed on-chain.
+
+        * **failed** — Transfer failed due to an on-chain error or rejection.
+    CreateTransferRequest:
+      type: object
+      description: Request to create a new on-chain transfer
+      required:
+        - asset_id
+        - qty
+        - qty_unit
+        - to
+      properties:
+        asset_id:
+          type: string
+          format: uuid
+          description: Asset identifier (UUID)
+          example: "b3d9e5f2-1a4c-4e7b-9f0d-2c8a6b3e5f91"
+        qty:
+          type: string
+          description: Transfer quantity as a positive decimal string
+          example: "100.00"
+        qty_unit:
+          type: string
+          enum: [base, quote]
+          description: >
+            Unit of the quantity.
+
+            * **base** — Quantity is denominated in the base asset.
+
+            * **quote** — Quantity is denominated in the quote asset.
+          example: "base"
+        to:
+          type: string
+          description: Destination wallet address
+          example: "0xd8dA6BF26964aF9D7eEd9e03E53415D37aA96045"
+        network:
+          type: string
+          description: >
+            Destination network for the withdrawal. **Required for CeFi transfers** and
+            **must be omitted for DeFi transfers** (DeFi derives the network from the asset's chain).
+
+
+            The set of supported networks is asset-specific and is retrieved from the
+            [`listAssets`](#operation/listAssets) (`GET /assets`) response: for the asset
+            whose `id` equals this request's `asset_id`, `network` must match one of that
+            asset's `networks[].network` values or any of their `networks[].compatible_networks`
+            values. Matching is case-insensitive. Supplying an unsupported network returns
+            `400 Bad Request`.
+          example: "bitcoin"
+    ExecuteTransferRequest:
+      type: object
+      description: >
+        Request to execute a transfer that is in `awaiting_signature` status.
+        The client must sign each payload returned by the create endpoint
+        and submit the signatures in the same order.
+      required:
+        - signatures
+        - auth_type
+      properties:
+        signatures:
+          type: array
+          items:
+            type: string
+          minItems: 1
+          description: >
+            Signed stamps for the unsigned payloads, in the same order as the payloads
+            returned by the create endpoint.
+        auth_type:
+          $ref: "#/components/schemas/SigningMethod"
+    TransferDetail:
+      type: object
+      description: Canonical representation of a transfer.
+      required:
+        - id
+        - status
+        - venue
+        - asset_id
+        - asset_symbol
+        - chain
+        - network
+        - to
+        - qty
+        - qty_unit
+        - sent
+        - fee
+        - received
+        - tx_hash
+        - payloads
+        - created_at
+        - updated_at
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: Unique transfer identifier
+        status:
+          $ref: "#/components/schemas/TransferStatus"
+        venue:
+          type: string
+          description: Trading venue (e.g. `defi`)
+        asset_id:
+          type: string
+          format: uuid
+          description: Asset identifier
+        asset_symbol:
+          type: string
+          description: Asset ticker symbol (e.g. `USDC`, `SOL`)
+        chain:
+          type: string
+          description: Blockchain network (e.g. `solana`, `base`) for DeFi transfers, or null for CeFi transfers
+        network:
+          type: string
+          description: >
+            Destination network the CeFi withdrawal was submitted on (one of the asset's
+            supported networks from `GET /assets`), or null for DeFi transfers.
+          example: "bitcoin"
+        to:
+          type: string
+          description: Destination wallet address
+        qty:
+          type: string
+          description: Transfer quantity as a decimal string
+        qty_unit:
+          type: string
+          enum: [base, quote]
+          description: Unit of the quantity
+        sent:
+          type: string
+          description: Amount sent as a decimal string
+        fee:
+          type: string
+          description: Fee as a decimal string
+        received:
+          type: string
+          description: Amount received as a decimal string
+        tx_hash:
+          type: string
+          description: On-chain transaction hash
+        payloads:
+          type: array
+          items:
+            $ref: "#/components/schemas/UnsignedPayload"
+          description: >
+            Unsigned transaction payloads for the client to sign. Present when status
+            is `awaiting_signature`; empty array after execution.
+        created_at:
+          type: string
+          format: date-time
+          description: Timestamp when the transfer was created (RFC 3339)
+        updated_at:
+          type: string
+          format: date-time
+          description: Timestamp of the last status update (RFC 3339)
+    ListTransfersResponseBody:
+      type: object
+      description: Paginated list of transfers
+      properties:
+        data:
+          type: array
+          items:
+            $ref: "#/components/schemas/TransferDetail"
+          description: List of transfers
+        pagination:
+          $ref: "#/components/schemas/Pagination"
+    ErrorResponse:
+      type: object
+      description: Error response
+      properties:
+        message:
+          type: string
+          description: Error message

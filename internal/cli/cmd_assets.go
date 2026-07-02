@@ -26,7 +26,7 @@ func newAssetsCmd() *cobra.Command {
 			host := ContextHost(ctx)
 			authToken := ContextAuthToken(ctx)
 
-			cli, err := newAPIClient(host, authToken)
+			cli, err := newGatewayClient(host, authToken)
 			if err != nil {
 				return fmt.Errorf("create client: %w", err)
 			}
@@ -75,10 +75,10 @@ func newAssetsCmd() *cobra.Command {
 	return cmd
 }
 
-func fetchAssetsRaw(ctx context.Context, cli *client.ClientWithResponses) ([]client.Asset, error) {
-	evmTrue := true
-	resp, err := cli.GetAssetsWithResponse(ctx, &client.GetAssetsParams{
-		Evm: &evmTrue,
+func fetchAssetsRaw(ctx context.Context, cli *client.ClientWithResponses) ([]client.AssetItem, error) {
+	venue := client.Defi
+	resp, err := cli.ListAssetsWithResponse(ctx, &client.ListAssetsParams{
+		Venue: &venue,
 	})
 	if err != nil {
 		return nil, fmt.Errorf("request failed: %w", err)
@@ -86,11 +86,14 @@ func fetchAssetsRaw(ctx context.Context, cli *client.ClientWithResponses) ([]cli
 	if resp.JSON200 == nil {
 		return nil, fmt.Errorf("status %d: %s", resp.StatusCode(), string(resp.Body))
 	}
-	return *resp.JSON200, nil
+	if resp.JSON200.Data == nil {
+		return nil, nil
+	}
+	return *resp.JSON200.Data, nil
 }
 
-func filterAssetsByChain(assets []client.Asset, chain string) []client.Asset {
-	var filtered []client.Asset
+func filterAssetsByChain(assets []client.AssetItem, chain string) []client.AssetItem {
+	var filtered []client.AssetItem
 	for _, a := range assets {
 		if a.Chain != nil && strings.EqualFold(*a.Chain, chain) {
 			filtered = append(filtered, a)

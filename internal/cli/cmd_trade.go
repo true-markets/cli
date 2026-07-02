@@ -14,22 +14,23 @@ import (
 	"github.com/true-markets/cli/pkg/client"
 )
 
-// USDC addresses per chain.
 const (
-	BaseUSDC   = "0x833589fcd6edb6e08f4c7c32d4f71b54bda02913"
-	SolanaUSDC = "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v"
-
 	symbolMaxLength = 10
 	tradeArgsCount  = 2
+
+	// Order sides and quantity units shared by the trade and transfer commands.
+	sideBuy      = "buy"
+	sideSell     = "sell"
+	qtyUnitBase  = "base"
+	qtyUnitQuote = "quote"
 )
 
 type quoteInputs struct {
-	Chain      string
-	OrderSide  string
-	BaseAsset  string
-	QuoteAsset string
-	Qty        string
-	QtyUnit    string
+	Chain     string
+	OrderSide string
+	BaseAsset string
+	Qty       string
+	QtyUnit   string
 }
 
 type quoteDisplay struct {
@@ -41,11 +42,11 @@ type quoteDisplay struct {
 }
 
 func newBuyCmd() *cobra.Command {
-	return newTradeCmd(string(client.Buy), string(client.Quote))
+	return newTradeCmd(sideBuy, qtyUnitQuote)
 }
 
 func newSellCmd() *cobra.Command {
-	return newTradeCmd(string(client.Sell), string(client.Base))
+	return newTradeCmd(sideSell, qtyUnitBase)
 }
 
 func newTradeCmd(side, defaultQtyUnit string) *cobra.Command {
@@ -81,7 +82,7 @@ func executeTradeFlow(cmd *cobra.Command, side, token, amount string) error {
 		return &CLIError{Code: ExitAuth, Message: "api key required - run 'tm config set api_key <key>'"}
 	}
 
-	cli, err := newAPIClient(host, authToken)
+	cli, err := newGatewayClient(host, authToken)
 	if err != nil {
 		return fmt.Errorf("create client: %w", err)
 	}
@@ -94,23 +95,29 @@ func executeTradeFlow(cmd *cobra.Command, side, token, amount string) error {
 
 	qtyUnit, _ := cmd.Flags().GetString("qty-unit")
 	qtyUnit = strings.ToLower(strings.TrimSpace(qtyUnit))
-	if qtyUnit != string(client.Base) && qtyUnit != string(client.Quote) {
-		qtyUnit, _ = cmd.Flags().GetString("qty-unit")
+	if qtyUnit != qtyUnitBase && qtyUnit != qtyUnitQuote {
+		return &CLIError{Code: ExitUsage, Message: "qty-unit must be 'base' or 'quote'"}
+	}
+
+	if side == sideBuy && qtyUnit != qtyUnitQuote {
+		return &CLIError{Code: ExitUsage, Message: "buy orders require --qty-unit quote"}
+	}
+	if side == sideSell && qtyUnit != qtyUnitBase {
+		return &CLIError{Code: ExitUsage, Message: "sell orders require --qty-unit base"}
 	}
 
 	dryRun, _ := cmd.Flags().GetBool("dry-run")
 	force, _ := cmd.Flags().GetBool("force")
 
 	inputs := quoteInputs{
-		Chain:      chain,
-		OrderSide:  side,
-		BaseAsset:  token,
-		QuoteAsset: getQuoteAssetForChain(chain),
-		Qty:        amount,
-		QtyUnit:    qtyUnit,
+		Chain:     chain,
+		OrderSide: side,
+		BaseAsset: token,
+		Qty:       amount,
+		QtyUnit:   qtyUnit,
 	}
 
-	quoteResp, err := requestQuote(ctx, cli, &inputs)
+	order, err := createOrder(ctx, cli, &inputs)
 	if err != nil {
 		return err
 	}
@@ -119,19 +126,16 @@ func executeTradeFlow(cmd *cobra.Command, side, token, amount string) error {
 	display := buildQuoteDisplay(inputs)
 
 	if dryRun {
-		return outputDryRunQuote(ctx, quoteResp, display)
+		return outputDryRunQuote(ctx, order, display, side)
 	}
 
-	if len(quoteResp.Payloads) == 0 {
-		return errors.New("quote response missing signing payloads")
+	if order.Payloads == nil || len(*order.Payloads) == 0 {
+		return errors.New("order response missing signing payloads")
 	}
 
 	// Show quote and confirm before executing
-	printQuotePlain(quoteResp, display)
+	printQuotePlain(order, display, side)
 
-	if len(quoteResp.Issues) > 0 {
-		return errors.New("cannot execute trade due to issues above")
-	}
 	if !force {
 		if ContextOutputJSON(ctx) {
 			return &CLIError{
@@ -149,90 +153,173 @@ func executeTradeFlow(cmd *cobra.Command, side, token, amount string) error {
 		}
 	}
 
+	if order.OrderId == nil || *order.OrderId == "" {
+		return errors.New("order response missing order_id")
+	}
+
 	// Sign payloads
-	signatures, err := signPayloads(quoteResp.Payloads, apiKey)
+	signatures, err := signPayloads(*order.Payloads, apiKey)
 	if err != nil {
 		return err
 	}
 
-	if quoteResp.QuoteId == "" {
-		return errors.New("quote response missing quote_id")
-	}
-
-	tradeResult, err := executeTrade(ctx, cli, quoteResp.QuoteId, signatures)
+	execResp, err := executeOrder(ctx, cli, *order.OrderId, signatures)
 	if err != nil {
 		return err
 	}
 
-	return outputTradeResult(ctx, tradeResult, chain)
+	// Fetch the full order detail (best effort) to recover the on-chain tx hash.
+	detail, _ := getOrder(ctx, cli, *order.OrderId)
+
+	return outputTradeResult(ctx, *order.OrderId, execResp, detail, chain)
 }
 
-func outputDryRunQuote(ctx context.Context, quoteResp *client.QuoteResponse, display quoteDisplay) error {
+func outputDryRunQuote(ctx context.Context, order *client.CreateOrderResponseBody, display quoteDisplay, side string) error {
 	if ContextOutputJSON(ctx) {
 		wrapper := struct {
-			*client.QuoteResponse
+			*client.CreateOrderResponseBody
 
 			Executed bool `json:"executed"`
 		}{
-			QuoteResponse: quoteResp,
-			Executed:      false,
+			CreateOrderResponseBody: order,
+			Executed:                false,
 		}
 		if err := output.WriteJSON(os.Stdout, wrapper); err != nil {
 			return fmt.Errorf("write json: %w", err)
 		}
 		return nil
 	}
-	printQuotePlain(quoteResp, display)
+	printQuotePlain(order, display, side)
 	fmt.Println("\n(dry run - not executed)")
 	return nil
 }
 
-func outputTradeResult(ctx context.Context, tradeResult *client.TradeResponse, chain string) error {
+// outputTradeResult reports a submitted order. detail is the full order detail
+// fetched after execution (may be nil if that lookup failed); it is used to
+// recover the on-chain transaction hash, falling back to the order ID and
+// status when the hash is not yet available.
+func outputTradeResult(
+	ctx context.Context,
+	orderID string,
+	execResp *client.ExecuteOrderResponseBody,
+	detail *client.OrderDetail,
+	chain string,
+) error {
 	if ContextOutputJSON(ctx) {
-		if err := output.WriteJSON(os.Stdout, tradeResult); err != nil {
+		var payload any = execResp
+		if detail != nil {
+			payload = detail
+		}
+		if err := output.WriteJSON(os.Stdout, payload); err != nil {
 			return fmt.Errorf("write json: %w", err)
 		}
 		return nil
 	}
 
 	fmt.Println("Trade submitted successfully")
-	if tradeResult.TxHash != nil && *tradeResult.TxHash != "" {
-		hash := *tradeResult.TxHash
+	fmt.Printf("Order ID: %s\n", orderID)
+	switch {
+	case detail != nil && detail.TxHash != nil && *detail.TxHash != "":
+		hash := *detail.TxHash
 		url := txExplorerURL(chain, hash)
 		fmt.Printf("Transaction Hash: %s\n", hyperlink(url, hash))
+	case detail != nil && detail.Status != nil:
+		fmt.Printf("Status: %s\n", string(*detail.Status))
+	case execResp.Status != nil:
+		fmt.Printf("Status: %s\n", string(*execResp.Status))
 	}
 
 	return nil
 }
 
-func executeTrade(
+// creates a DeFi market order, returning the unsigned payloads and embedded quote.
+func createOrder(
 	ctx context.Context,
 	cli *client.ClientWithResponses,
-	quoteID string,
+	inputs *quoteInputs,
+) (*client.CreateOrderResponseBody, error) {
+	// Resolve base asset (symbol → contract address if needed), scoped to the
+	// requested chain so a symbol listed on multiple chains resolves to the one
+	// the user asked for.
+	baseAddress := inputs.BaseAsset
+	if isSymbolInput(baseAddress) {
+		assets, err := fetchAssetsRaw(ctx, cli)
+		if err != nil {
+			return nil, fmt.Errorf("fetch assets for symbol resolution: %w", err)
+		}
+		asset, err := findAsset(baseAddress, inputs.Chain, assets)
+		if err != nil {
+			return nil, fmt.Errorf("resolve asset: %w", err)
+		}
+		if asset.Address == nil || strings.TrimSpace(*asset.Address) == "" {
+			return nil, fmt.Errorf("asset %s on %s has no contract address", baseAddress, inputs.Chain)
+		}
+		baseAddress = strings.TrimSpace(*asset.Address)
+	}
+
+	chainEnum := client.Chain(inputs.Chain)
+	// quote_asset is intentionally omitted: the gateway resolves and overwrites
+	// it per chain for DeFi orders, ignoring any client value.
+	req := client.CreateOrderRequest{
+		BaseAsset: baseAddress,
+		Chain:     &chainEnum,
+		Side:      client.OrderSide(inputs.OrderSide),
+		Type:      client.Market,
+		Qty:       inputs.Qty,
+		QtyUnit:   client.CreateOrderRequestQtyUnit(inputs.QtyUnit),
+	}
+
+	resp, err := cli.CreateOrderWithResponse(ctx, req)
+	if err != nil {
+		return nil, &CLIError{Code: ExitNetwork, Message: "order request failed", Err: err}
+	}
+
+	if resp.StatusCode() == http.StatusUnauthorized {
+		return nil, &CLIError{Code: ExitAuth, Message: "order request unauthorized"}
+	}
+
+	if resp.JSON201 == nil {
+		return nil, &CLIError{
+			Code: ExitAPI,
+			Message: fmt.Sprintf(
+				"order request failed (status %d): %s",
+				resp.StatusCode(),
+				string(resp.Body),
+			),
+		}
+	}
+
+	return resp.JSON201, nil
+}
+
+// executeOrder submits the signed payloads for a created order.
+func executeOrder(
+	ctx context.Context,
+	cli *client.ClientWithResponses,
+	orderID string,
 	signatures []string,
-) (*client.TradeResponse, error) {
+) (*client.ExecuteOrderResponseBody, error) {
 	if len(signatures) == 0 {
 		return nil, errors.New("missing signatures")
 	}
-	if quoteID == "" {
-		return nil, errors.New("quote_id is required")
+	if orderID == "" {
+		return nil, errors.New("order_id is required")
 	}
 
-	reqBody := client.TradeRequest{
-		QuoteId:    quoteID,
+	reqBody := client.ExecuteOrderRequest{
 		Signatures: signatures,
-		AuthType:   client.TradeRequestAuthTypeApiKey,
+		AuthType:   client.ApiKey,
 	}
 
-	resp, err := cli.ExecuteTradeWithResponse(ctx, &client.ExecuteTradeParams{}, reqBody)
+	resp, err := cli.ExecuteOrderWithResponse(ctx, orderID, reqBody)
 	if err != nil {
-		return nil, &CLIError{Code: ExitNetwork, Message: "trade request failed", Err: err}
+		return nil, &CLIError{Code: ExitNetwork, Message: "order execution failed", Err: err}
 	}
 
 	if resp.StatusCode() == http.StatusUnauthorized {
 		return nil, &CLIError{
 			Code:    ExitAuth,
-			Message: "trade request unauthorized: " + string(resp.Body),
+			Message: "order execution unauthorized: " + string(resp.Body),
 		}
 	}
 
@@ -240,7 +327,7 @@ func executeTrade(
 		return nil, &CLIError{
 			Code: ExitAPI,
 			Message: fmt.Sprintf(
-				"trade request failed (status %d): %s",
+				"order execution failed (status %d): %s",
 				resp.StatusCode(),
 				string(resp.Body),
 			),
@@ -250,64 +337,19 @@ func executeTrade(
 	return resp.JSON200, nil
 }
 
-func getQuoteAssetForChain(chain string) string {
-	switch strings.ToLower(chain) {
-	case chainBase:
-		return BaseUSDC
-	default:
-		return SolanaUSDC
-	}
-}
-
-func requestQuote(
+// getOrder fetches the full execution detail for an order.
+func getOrder(
 	ctx context.Context,
 	cli *client.ClientWithResponses,
-	inputs *quoteInputs,
-) (*client.QuoteResponse, error) {
-	// Resolve base asset (symbol → address if needed)
-	baseAddress := inputs.BaseAsset
-	if isSymbolInput(baseAddress) {
-		assets, err := fetchAssetsRaw(ctx, cli)
-		if err != nil {
-			return nil, fmt.Errorf("fetch assets for symbol resolution: %w", err)
-		}
-		resolved, chain, err := resolveSymbol(baseAddress, assets)
-		if err != nil {
-			return nil, fmt.Errorf("resolve asset: %w", err)
-		}
-		baseAddress = resolved
-		inputs.Chain = chain
-		inputs.QuoteAsset = getQuoteAssetForChain(chain)
-	}
-
-	req := client.QuoteRequest{
-		OrderSide:  client.QuoteRequestOrderSide(inputs.OrderSide),
-		Chain:      inputs.Chain,
-		BaseAsset:  baseAddress,
-		QuoteAsset: inputs.QuoteAsset,
-		Qty:        inputs.Qty,
-	}
-
-	resp, err := cli.CreateQuoteWithResponse(ctx, &client.CreateQuoteParams{}, req)
+	orderID string,
+) (*client.OrderDetail, error) {
+	resp, err := cli.GetOrderWithResponse(ctx, orderID)
 	if err != nil {
-		return nil, &CLIError{Code: ExitNetwork, Message: "quote request failed", Err: err}
+		return nil, fmt.Errorf("get order: %w", err)
 	}
-
-	if resp.StatusCode() == http.StatusUnauthorized {
-		return nil, &CLIError{Code: ExitAuth, Message: "quote request unauthorized"}
-	}
-
 	if resp.JSON200 == nil {
-		return nil, &CLIError{
-			Code: ExitAPI,
-			Message: fmt.Sprintf(
-				"quote request failed (status %d): %s",
-				resp.StatusCode(),
-				string(resp.Body),
-			),
-		}
+		return nil, fmt.Errorf("get order failed (status %d)", resp.StatusCode())
 	}
-
 	return resp.JSON200, nil
 }
 
@@ -315,57 +357,31 @@ func isSymbolInput(input string) bool {
 	return input != "" && len(input) <= symbolMaxLength
 }
 
-func resolveAssetInput(
-	chain, input string,
-	assets []client.Asset,
-) (string, error) {
-	if !isSymbolInput(input) {
-		return input, nil
+// findAsset locates a catalog entry by symbol or by exact contract address. A
+// symbol is matched scoped to chain, because the same symbol can exist on
+// multiple chains (e.g. USDC on both solana and base) with distinct addresses
+// and asset IDs; an address is globally unique, so chain is not consulted.
+func findAsset(input, chain string, assets []client.AssetItem) (*client.AssetItem, error) {
+	if isSymbolInput(input) {
+		for i := range assets {
+			asset := &assets[i]
+			if asset.Symbol == nil || asset.Chain == nil {
+				continue
+			}
+			if strings.EqualFold(*asset.Symbol, input) && strings.EqualFold(*asset.Chain, chain) {
+				return asset, nil
+			}
+		}
+		return nil, fmt.Errorf("could not resolve symbol %s on chain %s", input, chain)
 	}
 
-	lowerChain := strings.ToLower(chain)
-	lowerSymbol := strings.ToLower(input)
-
-	for _, asset := range assets {
-		if asset.Symbol == nil || asset.Address == nil || asset.Chain == nil {
-			continue
+	for i := range assets {
+		asset := &assets[i]
+		if asset.Address != nil && strings.EqualFold(*asset.Address, input) {
+			return asset, nil
 		}
-		if !strings.EqualFold(*asset.Symbol, lowerSymbol) {
-			continue
-		}
-		if !strings.EqualFold(*asset.Chain, lowerChain) {
-			continue
-		}
-		address := strings.TrimSpace(*asset.Address)
-		if address == "" {
-			continue
-		}
-		return address, nil
 	}
-
-	return "", fmt.Errorf("could not resolve symbol %s on chain %s", input, chain)
-}
-
-// resolveSymbol resolves a symbol across all chains, returning the
-// address and chain of the first match.
-func resolveSymbol(input string, assets []client.Asset) (address, chain string, err error) {
-	lowerSymbol := strings.ToLower(input)
-
-	for _, asset := range assets {
-		if asset.Symbol == nil || asset.Address == nil || asset.Chain == nil {
-			continue
-		}
-		if !strings.EqualFold(*asset.Symbol, lowerSymbol) {
-			continue
-		}
-		addr := strings.TrimSpace(*asset.Address)
-		if addr == "" {
-			continue
-		}
-		return addr, strings.ToLower(*asset.Chain), nil
-	}
-
-	return "", "", fmt.Errorf("could not resolve symbol %s", input)
+	return nil, fmt.Errorf("could not resolve asset %s", input)
 }
 
 func buildQuoteDisplay(inputs quoteInputs) quoteDisplay {
@@ -382,8 +398,8 @@ func buildQuoteDisplay(inputs quoteInputs) quoteDisplay {
 	// sell+base:  pay token, receive USDC   (user typed token amount)
 	// buy+base:   pay token, receive USDC   (user typed token amount)
 	// sell+quote: pay USDC, receive token   (user typed USDC amount)
-	payUSDC := (side == string(client.Buy) && qtyUnit == string(client.Quote)) ||
-		(side == string(client.Sell) && qtyUnit == string(client.Quote))
+	payUSDC := (side == sideBuy && qtyUnit == qtyUnitQuote) ||
+		(side == sideSell && qtyUnit == qtyUnitQuote)
 
 	if payUSDC {
 		return quoteDisplay{Chain: inputs.Chain, PayQty: inputs.Qty, PayLabel: "USDC", RecvLabel: token, FeeLabel: "USDC"}
@@ -391,8 +407,8 @@ func buildQuoteDisplay(inputs quoteInputs) quoteDisplay {
 	return quoteDisplay{Chain: inputs.Chain, PayQty: inputs.Qty, PayLabel: token, RecvLabel: "USDC", FeeLabel: "USDC"}
 }
 
-func printQuotePlain(quote *client.QuoteResponse, display quoteDisplay) {
-	if quote == nil {
+func printQuotePlain(order *client.CreateOrderResponseBody, display quoteDisplay, side string) {
+	if order == nil {
 		fmt.Println("No quote data")
 		return
 	}
@@ -400,15 +416,21 @@ func printQuotePlain(quote *client.QuoteResponse, display quoteDisplay) {
 	if display.Chain != "" {
 		fmt.Printf("Chain:        %s\n", titleCase(display.Chain))
 	}
-	fmt.Printf("Side:         %s\n", strings.ToUpper(quote.OrderSide))
+	fmt.Printf("Side:         %s\n", strings.ToUpper(side))
 	fmt.Printf("You pay:      %s %s\n", display.PayQty, display.PayLabel)
-	fmt.Printf("You receive:  %s %s\n", quote.QtyOut, display.RecvLabel)
-	fmt.Printf("Fee:          %s %s\n", quote.Fee, display.FeeLabel)
-	for _, issue := range quote.Issues {
-		msg := issue.Message
-		if issue.Balance != nil {
-			msg += fmt.Sprintf(" (have %s, need %s)", issue.Balance.Actual, issue.Balance.Expected)
+
+	var qtyOut, fee string
+	var issues []string
+	if order.Quote != nil {
+		qtyOut = getStringValue(order.Quote.QtyOut)
+		fee = getStringValue(order.Quote.Fee)
+		if order.Quote.Issues != nil {
+			issues = *order.Quote.Issues
 		}
-		fmt.Printf("Issue:        %s\n", msg)
+	}
+	fmt.Printf("You receive:  %s %s\n", qtyOut, display.RecvLabel)
+	fmt.Printf("Fee:          %s %s\n", fee, display.FeeLabel)
+	for _, issue := range issues {
+		fmt.Printf("Issue:        %s\n", issue)
 	}
 }

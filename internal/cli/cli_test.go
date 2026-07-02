@@ -15,10 +15,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/true-markets/cli/pkg/client"
-)
-
-const (
-	_testSymbolSOL = "SOL"
+	"github.com/true-markets/cli/pkg/deficore"
 )
 
 func TestNormalizeChain(t *testing.T) {
@@ -87,81 +84,47 @@ func TestIsSymbolInput(t *testing.T) {
 	})
 }
 
-func TestResolveAssetInput(t *testing.T) {
-	addr := "0xabc123"
-	symbol := "TEST"
-	chain := chainSolana
+func TestFindAsset(t *testing.T) {
+	solUSDCID, solUSDCAddr := "11111111-1111-1111-1111-111111111111", "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v"
+	baseUSDCID, baseUSDCAddr := "22222222-2222-2222-2222-222222222222", "0x833589fcd6edb6e08f4c7c32d4f71b54bda02913"
+	usdc := "USDC"
+	sol, base := chainSolana, chainBase
 
-	assets := []client.Asset{
-		{Symbol: &symbol, Address: &addr, Chain: &chain},
+	// USDC exists on both chains with distinct ids/addresses — the case that
+	// motivated chain-scoped resolution.
+	assets := []client.AssetItem{
+		{Id: &solUSDCID, Symbol: &usdc, Address: &solUSDCAddr, Chain: &sol},
+		{Id: &baseUSDCID, Symbol: &usdc, Address: &baseUSDCAddr, Chain: &base},
 	}
 
-	t.Run("success", func(t *testing.T) {
-		got, err := resolveAssetInput(chainSolana, "TEST", assets)
+	t.Run("symbol scoped to chain picks the right chain", func(t *testing.T) {
+		onSol, err := findAsset("USDC", chainSolana, assets)
 		require.NoError(t, err)
-		assert.Equal(t, "0xabc123", got)
+		assert.Equal(t, solUSDCID, *onSol.Id)
+
+		onBase, err := findAsset("usdc", chainBase, assets) // case-insensitive
+		require.NoError(t, err)
+		assert.Equal(t, baseUSDCID, *onBase.Id)
 	})
 
-	t.Run("address passthrough", func(t *testing.T) {
-		longAddr := "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v"
-		got, err := resolveAssetInput(chainSolana, longAddr, assets)
+	t.Run("address matches regardless of chain arg", func(t *testing.T) {
+		got, err := findAsset(baseUSDCAddr, chainSolana, assets)
 		require.NoError(t, err)
-		assert.Equal(t, longAddr, got)
+		assert.Equal(t, baseUSDCID, *got.Id)
 	})
 
 	t.Run("error", func(t *testing.T) {
-		t.Run("not found", func(t *testing.T) {
-			_, err := resolveAssetInput(chainSolana, "NOPE", assets)
+		t.Run("symbol not on requested chain", func(t *testing.T) {
+			_, err := findAsset("USDC", "polygon", assets)
 			require.Error(t, err)
-			assert.Contains(t, err.Error(), "could not resolve symbol")
+			assert.Contains(t, err.Error(), "could not resolve symbol USDC on chain polygon")
 		})
 
-		t.Run("wrong chain", func(t *testing.T) {
-			_, err := resolveAssetInput(chainBase, "TEST", assets)
+		t.Run("address not found", func(t *testing.T) {
+			_, err := findAsset("0xdeadbeefdeadbeefdeadbeefdeadbeefdeadbeef", chainBase, assets)
 			require.Error(t, err)
+			assert.Contains(t, err.Error(), "could not resolve asset")
 		})
-	})
-}
-
-func TestResolveSymbol(t *testing.T) {
-	solAddr := "So11111111111111111111111111111111111111112"
-	solSymbol := "SOL"
-	solChain := chainSolana
-
-	ethAddr := "0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE"
-	ethSymbol := "ETH"
-	baseChain := chainBase
-
-	assets := []client.Asset{
-		{Symbol: &solSymbol, Address: &solAddr, Chain: &solChain},
-		{Symbol: &ethSymbol, Address: &ethAddr, Chain: &baseChain},
-	}
-
-	t.Run("resolves SOL", func(t *testing.T) {
-		addr, chain, err := resolveSymbol("SOL", assets)
-		require.NoError(t, err)
-		assert.Equal(t, solAddr, addr)
-		assert.Equal(t, chainSolana, chain)
-	})
-
-	t.Run("resolves ETH on base", func(t *testing.T) {
-		addr, chain, err := resolveSymbol("eth", assets)
-		require.NoError(t, err)
-		assert.Equal(t, ethAddr, addr)
-		assert.Equal(t, chainBase, chain)
-	})
-
-	t.Run("case insensitive", func(t *testing.T) {
-		addr, chain, err := resolveSymbol("sol", assets)
-		require.NoError(t, err)
-		assert.Equal(t, solAddr, addr)
-		assert.Equal(t, chainSolana, chain)
-	})
-
-	t.Run("not found", func(t *testing.T) {
-		_, _, err := resolveSymbol("NOPE", assets)
-		require.Error(t, err)
-		assert.Contains(t, err.Error(), "could not resolve symbol NOPE")
 	})
 }
 
@@ -170,7 +133,7 @@ func TestFilterAssetsByChain(t *testing.T) {
 	base := chainBase
 	addr := "0x1"
 
-	assets := []client.Asset{
+	assets := []client.AssetItem{
 		{Chain: &sol, Address: &addr},
 		{Chain: &base, Address: &addr},
 		{Chain: nil, Address: &addr},
@@ -197,7 +160,7 @@ func TestFilterBalancesByChain(t *testing.T) {
 	sol := chainSolana
 	base := chainBase
 
-	balances := []client.Balance{
+	balances := []client.BalanceItem{
 		{Chain: &sol},
 		{Chain: &base},
 		{Chain: nil},
@@ -212,26 +175,6 @@ func TestFilterBalancesByChain(t *testing.T) {
 	t.Run("empty result", func(t *testing.T) {
 		filtered := filterBalancesByChain(balances, "ethereum")
 		assert.Empty(t, filtered)
-	})
-}
-
-func TestGetQuoteAssetForChain(t *testing.T) {
-	t.Run("success", func(t *testing.T) {
-		tests := []struct {
-			chain string
-			want  string
-		}{
-			{"base", BaseUSDC},
-			{"Base", BaseUSDC},
-			{"solana", SolanaUSDC},
-			{"Solana", SolanaUSDC},
-			{"unknown", SolanaUSDC},
-		}
-		for _, tt := range tests {
-			t.Run(tt.chain, func(t *testing.T) {
-				assert.Equal(t, tt.want, getQuoteAssetForChain(tt.chain))
-			})
-		}
 	})
 }
 
@@ -502,12 +445,12 @@ func TestKeyStore(t *testing.T) {
 }
 
 func TestFetchWhoami(t *testing.T) {
-	decodeWhoami := func(t *testing.T, serverURL string) (*client.ProfileResponse, error) {
+	decodeWhoami := func(t *testing.T, serverURL string) (*deficore.ProfileResponse, error) {
 		t.Helper()
-		cli, err := client.NewClientWithResponses(serverURL)
+		cli, err := deficore.NewClientWithResponses(serverURL)
 		require.NoError(t, err)
 
-		resp, err := cli.GetProfile(context.Background(), &client.GetProfileParams{})
+		resp, err := cli.GetProfile(context.Background(), &deficore.GetProfileParams{})
 		if err != nil {
 			return nil, err
 		}
@@ -517,7 +460,7 @@ func TestFetchWhoami(t *testing.T) {
 			return nil, &CLIError{Code: ExitAPI, Message: "non-200 status"}
 		}
 
-		var profile client.ProfileResponse
+		var profile deficore.ProfileResponse
 		if err := json.NewDecoder(resp.Body).Decode(&profile); err != nil {
 			return nil, err
 		}
@@ -671,46 +614,46 @@ func TestAddressExplorerURL(t *testing.T) {
 }
 
 func TestPrintQuotePlain(t *testing.T) {
+	strPtr := func(s string) *string { return &s }
+
 	t.Run("all fields", func(t *testing.T) {
-		quote := &client.QuoteResponse{
-			OrderSide: "buy",
-			QtyOut:    "0.02",
-			Fee:       "0.01",
-			QuoteId:   "d513bb",
+		order := &client.CreateOrderResponseBody{
+			Quote: &client.QuoteDetails{
+				QtyOut: strPtr("0.02"),
+				Fee:    strPtr("0.01"),
+			},
 		}
 		display := quoteDisplay{Chain: "solana", PayQty: "1.00", PayLabel: "USDC", RecvLabel: "SOL", FeeLabel: "USDC"}
 
-		got := captureStdout(t, func() { printQuotePlain(quote, display) })
+		got := captureStdout(t, func() { printQuotePlain(order, display, "buy") })
 
 		assert.Contains(t, got, "Chain:        Solana")
 		assert.Contains(t, got, "Side:         BUY")
 		assert.Contains(t, got, "You pay:      1.00 USDC")
 		assert.Contains(t, got, "You receive:  0.02 SOL")
 		assert.Contains(t, got, "Fee:          0.01 USDC")
-		assert.NotContains(t, got, "Quote ID")
+		assert.NotContains(t, got, "Order ID")
 	})
 
 	t.Run("with issues", func(t *testing.T) {
-		quote := &client.QuoteResponse{
-			OrderSide: "buy",
-			QtyOut:    "5.00",
-			Issues: []client.QuoteIssue{
-				{Message: "insufficient balance", Balance: &client.QuoteIssueBalance{Actual: "50", Expected: "100"}},
-				{Message: "trade size below minimum"},
+		order := &client.CreateOrderResponseBody{
+			Quote: &client.QuoteDetails{
+				QtyOut: strPtr("5.00"),
+				Issues: &[]string{"high price impact", "low liquidity"},
 			},
 		}
 		display := quoteDisplay{PayQty: "100", PayLabel: "USDC", RecvLabel: "SOL", FeeLabel: "USDC"}
 
-		got := captureStdout(t, func() { printQuotePlain(quote, display) })
+		got := captureStdout(t, func() { printQuotePlain(order, display, "buy") })
 
-		assert.Contains(t, got, "Issue:        insufficient balance (have 50, need 100)")
-		assert.Contains(t, got, "Issue:        trade size below minimum")
+		assert.Contains(t, got, "Issue:        high price impact")
+		assert.Contains(t, got, "Issue:        low liquidity")
 	})
 
 	t.Run("nil quote", func(t *testing.T) {
 		display := quoteDisplay{PayQty: "1", PayLabel: "USDC", RecvLabel: "SOL", FeeLabel: "USDC"}
 
-		got := captureStdout(t, func() { printQuotePlain(nil, display) })
+		got := captureStdout(t, func() { printQuotePlain(nil, display, "buy") })
 
 		assert.Contains(t, got, "No quote data")
 	})
@@ -742,57 +685,32 @@ func TestBuildQuoteDisplay(t *testing.T) {
 }
 
 func TestFetchBalances(t *testing.T) {
-	// fetchBalances is inlined in runBalances, so we test the decode path
-	// by creating a mock server and calling the client + decoding manually,
-	// mirroring the exact logic from runBalances.
-	decodeBalances := func(t *testing.T, serverURL string) ([]client.Balance, error) {
+	// Mirror the decode path in runBalances: call the gateway client against a
+	// mock gateway and read the balances from the response body.
+	decodeBalances := func(t *testing.T, serverURL string) ([]client.BalanceItem, error) {
 		t.Helper()
 		cli, err := client.NewClientWithResponses(serverURL)
 		require.NoError(t, err)
 
-		evm := true
-		resp, err := cli.GetBalances(context.Background(), &client.GetBalancesParams{
-			Evm: &evm,
-		})
+		resp, err := cli.GetBalancesWithResponse(context.Background())
 		if err != nil {
 			return nil, err
 		}
-		defer func() { _ = resp.Body.Close() }()
-
-		if resp.StatusCode != http.StatusOK {
+		if resp.JSON200 == nil {
 			return nil, &CLIError{Code: ExitAPI, Message: "non-200 status"}
 		}
-
-		var response client.BalanceResponse
-		if err := json.NewDecoder(resp.Body).Decode(&response); err != nil {
-			return nil, err
-		}
-		if response.Balances == nil {
+		if resp.JSON200.Data == nil {
 			return nil, nil
 		}
-		return *response.Balances, nil
+		return *resp.JSON200.Data, nil
 	}
 
 	t.Run("success", func(t *testing.T) {
 		t.Run("with_balances", func(t *testing.T) {
-			chain := "solana"
-			symbol := _testSymbolSOL
-			asset := "So11111111111111111111111111111111111111112"
-			balance := "1.5"
-
-			server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
-				resp := client.BalanceResponse{
-					Balances: &[]client.Balance{
-						{
-							Chain:   &chain,
-							Symbol:  &symbol,
-							Asset:   &asset,
-							Balance: &balance,
-						},
-					},
-				}
+			server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+				assert.Equal(t, "/balances", r.URL.Path)
 				w.Header().Set("Content-Type", "application/json")
-				_ = json.NewEncoder(w).Encode(resp)
+				_, _ = w.Write([]byte(`{"data":[{"chain":"solana","symbol":"SOL","address":"So11111111111111111111111111111111111111112","total":"1.5"}]}`))
 			}))
 			t.Cleanup(server.Close)
 
@@ -802,17 +720,14 @@ func TestFetchBalances(t *testing.T) {
 
 			assert.Equal(t, "solana", *balances[0].Chain)
 			assert.Equal(t, "SOL", *balances[0].Symbol)
-			assert.Equal(t, "So11111111111111111111111111111111111111112", *balances[0].Asset)
-			assert.Equal(t, "1.5", *balances[0].Balance)
+			assert.Equal(t, "So11111111111111111111111111111111111111112", *balances[0].Address)
+			assert.Equal(t, "1.5", *balances[0].Total)
 		})
 
 		t.Run("empty_balances", func(t *testing.T) {
 			server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
-				resp := client.BalanceResponse{
-					Balances: &[]client.Balance{},
-				}
 				w.Header().Set("Content-Type", "application/json")
-				_ = json.NewEncoder(w).Encode(resp)
+				_, _ = w.Write([]byte(`{"data":[]}`))
 			}))
 			t.Cleanup(server.Close)
 
@@ -834,22 +749,9 @@ func TestFetchBalances(t *testing.T) {
 		})
 
 		t.Run("multiple_chains", func(t *testing.T) {
-			sol := "solana"
-			base := "base"
-			solSymbol := _testSymbolSOL
-			ethSymbol := "ETH"
-			solBal := "10.0"
-			ethBal := "0.5"
-
 			server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
-				resp := client.BalanceResponse{
-					Balances: &[]client.Balance{
-						{Chain: &sol, Symbol: &solSymbol, Balance: &solBal},
-						{Chain: &base, Symbol: &ethSymbol, Balance: &ethBal},
-					},
-				}
 				w.Header().Set("Content-Type", "application/json")
-				_ = json.NewEncoder(w).Encode(resp)
+				_, _ = w.Write([]byte(`{"data":[{"chain":"solana","symbol":"SOL","total":"10.0"},{"chain":"base","symbol":"ETH","total":"0.5"}]}`))
 			}))
 			t.Cleanup(server.Close)
 
@@ -865,7 +767,7 @@ func TestFetchBalances(t *testing.T) {
 		t.Run("non_200_status", func(t *testing.T) {
 			server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
 				w.WriteHeader(http.StatusForbidden)
-				_, _ = w.Write([]byte(`{"error": "forbidden"}`))
+				_, _ = w.Write([]byte(`{"message": "forbidden"}`))
 			}))
 			t.Cleanup(server.Close)
 
@@ -881,20 +783,6 @@ func TestFetchBalances(t *testing.T) {
 			server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
 				w.Header().Set("Content-Type", "application/json")
 				_, _ = w.Write([]byte(`not json`))
-			}))
-			t.Cleanup(server.Close)
-
-			_, err := decodeBalances(t, server.URL)
-			require.Error(t, err)
-		})
-
-		t.Run("bare_array_rejected", func(t *testing.T) {
-			// Ensures that a bare JSON array does not decode into BalanceResponse,
-			// which expects {"balances": [...]}.
-			// The JSON decoder correctly rejects unmarshalling an array into a struct.
-			server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
-				w.Header().Set("Content-Type", "application/json")
-				_, _ = w.Write([]byte(`[{"symbol": "SOL", "balance": "1.0"}]`))
 			}))
 			t.Cleanup(server.Close)
 

@@ -12,6 +12,7 @@ import (
 	"net/http"
 	"net/url"
 	"strings"
+	"time"
 
 	"github.com/oapi-codegen/runtime"
 	openapi_types "github.com/oapi-codegen/runtime/types"
@@ -21,29 +22,68 @@ const (
 	BearerAuthScopes = "bearerAuth.Scopes"
 )
 
-// Defines values for OnrampRequestPaymentMethod.
+// Defines values for Chain.
 const (
-	CARD OnrampRequestPaymentMethod = "CARD"
+	ChainBase   Chain = "base"
+	ChainSolana Chain = "solana"
 )
 
-// Valid indicates whether the value is a known member of the OnrampRequestPaymentMethod enum.
-func (e OnrampRequestPaymentMethod) Valid() bool {
+// Valid indicates whether the value is a known member of the Chain enum.
+func (e Chain) Valid() bool {
 	switch e {
-	case CARD:
+	case ChainBase:
+		return true
+	case ChainSolana:
 		return true
 	default:
 		return false
 	}
 }
 
-// Defines values for QuoteRequestOrderSide.
+// Defines values for CreateOrderRequestQtyUnit.
 const (
-	Buy  QuoteRequestOrderSide = "buy"
-	Sell QuoteRequestOrderSide = "sell"
+	CreateOrderRequestQtyUnitBase  CreateOrderRequestQtyUnit = "base"
+	CreateOrderRequestQtyUnitQuote CreateOrderRequestQtyUnit = "quote"
 )
 
-// Valid indicates whether the value is a known member of the QuoteRequestOrderSide enum.
-func (e QuoteRequestOrderSide) Valid() bool {
+// Valid indicates whether the value is a known member of the CreateOrderRequestQtyUnit enum.
+func (e CreateOrderRequestQtyUnit) Valid() bool {
+	switch e {
+	case CreateOrderRequestQtyUnitBase:
+		return true
+	case CreateOrderRequestQtyUnitQuote:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for CreateTransferRequestQtyUnit.
+const (
+	CreateTransferRequestQtyUnitBase  CreateTransferRequestQtyUnit = "base"
+	CreateTransferRequestQtyUnitQuote CreateTransferRequestQtyUnit = "quote"
+)
+
+// Valid indicates whether the value is a known member of the CreateTransferRequestQtyUnit enum.
+func (e CreateTransferRequestQtyUnit) Valid() bool {
+	switch e {
+	case CreateTransferRequestQtyUnitBase:
+		return true
+	case CreateTransferRequestQtyUnitQuote:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for OrderSide.
+const (
+	Buy  OrderSide = "buy"
+	Sell OrderSide = "sell"
+)
+
+// Valid indicates whether the value is a known member of the OrderSide enum.
+func (e OrderSide) Valid() bool {
 	switch e {
 	case Buy:
 		return true
@@ -54,50 +94,101 @@ func (e QuoteRequestOrderSide) Valid() bool {
 	}
 }
 
-// Defines values for TradeRequestAuthType.
+// Defines values for OrderStatus.
 const (
-	TradeRequestAuthTypeApiKey   TradeRequestAuthType = "api_key"
-	TradeRequestAuthTypeWebAuthn TradeRequestAuthType = "web_authn"
+	OrderStatusActive        OrderStatus = "active"
+	OrderStatusCancelPending OrderStatus = "cancel_pending"
+	OrderStatusCanceled      OrderStatus = "canceled"
+	OrderStatusComplete      OrderStatus = "complete"
+	OrderStatusFailed        OrderStatus = "failed"
+	OrderStatusInitialized   OrderStatus = "initialized"
+	OrderStatusPending       OrderStatus = "pending"
 )
 
-// Valid indicates whether the value is a known member of the TradeRequestAuthType enum.
-func (e TradeRequestAuthType) Valid() bool {
+// Valid indicates whether the value is a known member of the OrderStatus enum.
+func (e OrderStatus) Valid() bool {
 	switch e {
-	case TradeRequestAuthTypeApiKey:
+	case OrderStatusActive:
 		return true
-	case TradeRequestAuthTypeWebAuthn:
+	case OrderStatusCancelPending:
+		return true
+	case OrderStatusCanceled:
+		return true
+	case OrderStatusComplete:
+		return true
+	case OrderStatusFailed:
+		return true
+	case OrderStatusInitialized:
+		return true
+	case OrderStatusPending:
 		return true
 	default:
 		return false
 	}
 }
 
-// Defines values for TransferExecuteRequestAuthType.
+// Defines values for OrderType.
 const (
-	TransferExecuteRequestAuthTypeApiKey   TransferExecuteRequestAuthType = "api_key"
-	TransferExecuteRequestAuthTypeWebAuthn TransferExecuteRequestAuthType = "web_authn"
+	Limit  OrderType = "limit"
+	Market OrderType = "market"
 )
 
-// Valid indicates whether the value is a known member of the TransferExecuteRequestAuthType enum.
-func (e TransferExecuteRequestAuthType) Valid() bool {
+// Valid indicates whether the value is a known member of the OrderType enum.
+func (e OrderType) Valid() bool {
 	switch e {
-	case TransferExecuteRequestAuthTypeApiKey:
+	case Limit:
 		return true
-	case TransferExecuteRequestAuthTypeWebAuthn:
+	case Market:
 		return true
 	default:
 		return false
 	}
 }
 
-// Defines values for TransferPrepareRequestQtyUnit.
+// Defines values for QuoteRequestQtyUnit.
 const (
-	Base  TransferPrepareRequestQtyUnit = "base"
-	Quote TransferPrepareRequestQtyUnit = "quote"
+	QuoteRequestQtyUnitBase  QuoteRequestQtyUnit = "base"
+	QuoteRequestQtyUnitQuote QuoteRequestQtyUnit = "quote"
 )
 
-// Valid indicates whether the value is a known member of the TransferPrepareRequestQtyUnit enum.
-func (e TransferPrepareRequestQtyUnit) Valid() bool {
+// Valid indicates whether the value is a known member of the QuoteRequestQtyUnit enum.
+func (e QuoteRequestQtyUnit) Valid() bool {
+	switch e {
+	case QuoteRequestQtyUnitBase:
+		return true
+	case QuoteRequestQtyUnitQuote:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for SigningMethod.
+const (
+	ApiKey   SigningMethod = "api_key"
+	WebAuthn SigningMethod = "web_authn"
+)
+
+// Valid indicates whether the value is a known member of the SigningMethod enum.
+func (e SigningMethod) Valid() bool {
+	switch e {
+	case ApiKey:
+		return true
+	case WebAuthn:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for TransferDetailQtyUnit.
+const (
+	Base  TransferDetailQtyUnit = "base"
+	Quote TransferDetailQtyUnit = "quote"
+)
+
+// Valid indicates whether the value is a known member of the TransferDetailQtyUnit enum.
+func (e TransferDetailQtyUnit) Valid() bool {
 	switch e {
 	case Base:
 		return true
@@ -108,41 +199,123 @@ func (e TransferPrepareRequestQtyUnit) Valid() bool {
 	}
 }
 
-// Asset Asset details
-type Asset struct {
-	Address     *string             `json:"address,omitempty"`
-	Chain       *string             `json:"chain,omitempty"`
-	Decimals    *int                `json:"decimals,omitempty"`
-	Description *string             `json:"description,omitempty"`
-	Icon        *string             `json:"icon,omitempty"`
-	Id          *openapi_types.UUID `json:"id,omitempty"`
-	Image       *AssetImage         `json:"image,omitempty"`
-	IsActive    *bool               `json:"is_active,omitempty"`
-	MarketData  *AssetMarketData    `json:"market_data,omitempty"`
-	Name        *string             `json:"name,omitempty"`
-	Slug        *string             `json:"slug,omitempty"`
-	Socials     *AssetSocials       `json:"socials,omitempty"`
-	Stable      *bool               `json:"stable,omitempty"`
-	Symbol      *string             `json:"symbol,omitempty"`
-	Tradeable   *bool               `json:"tradeable,omitempty"`
-	Website     *string             `json:"website,omitempty"`
+// Defines values for TransferStatus.
+const (
+	TransferStatusAwaitingSignature TransferStatus = "awaiting_signature"
+	TransferStatusCompleted         TransferStatus = "completed"
+	TransferStatusFailed            TransferStatus = "failed"
+	TransferStatusPending           TransferStatus = "pending"
+)
+
+// Valid indicates whether the value is a known member of the TransferStatus enum.
+func (e TransferStatus) Valid() bool {
+	switch e {
+	case TransferStatusAwaitingSignature:
+		return true
+	case TransferStatusCompleted:
+		return true
+	case TransferStatusFailed:
+		return true
+	case TransferStatusPending:
+		return true
+	default:
+		return false
+	}
 }
 
-// AssetImage defines model for AssetImage.
+// Defines values for Venue.
+const (
+	Cefi Venue = "cefi"
+	Defi Venue = "defi"
+)
+
+// Valid indicates whether the value is a known member of the Venue enum.
+func (e Venue) Valid() bool {
+	switch e {
+	case Cefi:
+		return true
+	case Defi:
+		return true
+	default:
+		return false
+	}
+}
+
+// AssetImage Asset image URLs at various resolutions
 type AssetImage struct {
 	Large *string `json:"large,omitempty"`
 	Small *string `json:"small,omitempty"`
 	Thumb *string `json:"thumb,omitempty"`
 }
 
-// AssetMarketData defines model for AssetMarketData.
+// AssetItem A single tradeable asset
+type AssetItem struct {
+	// Address Token contract address (null for CeFi assets)
+	Address *string `json:"address,omitempty"`
+
+	// Chain Blockchain network (null for CeFi assets)
+	Chain *string `json:"chain,omitempty"`
+
+	// Decimals Token decimal precision
+	Decimals    *int    `json:"decimals,omitempty"`
+	Description *string `json:"description,omitempty"`
+
+	// Icon Icon image URL
+	Icon *string `json:"icon,omitempty"`
+
+	// Id Canonical asset identifier (spot_assets UUID)
+	Id *string `json:"id,omitempty"`
+
+	// Image Asset image URLs at various resolutions
+	Image    *AssetImage `json:"image,omitempty"`
+	IsActive *bool       `json:"is_active,omitempty"`
+
+	// MarketData Supply-side market data
+	MarketData *AssetMarketData `json:"market_data,omitempty"`
+
+	// Name Human-readable asset name
+	Name     *string        `json:"name,omitempty"`
+	Networks []AssetNetwork `json:"networks"`
+
+	// Slug URL-safe asset identifier
+	Slug *string `json:"slug,omitempty"`
+
+	// Socials Social media links
+	Socials *AssetSocials `json:"socials,omitempty"`
+
+	// Stable Whether this is a stablecoin
+	Stable *bool `json:"stable,omitempty"`
+
+	// Symbol Asset ticker symbol (e.g. BTC, SOL)
+	Symbol *string `json:"symbol,omitempty"`
+
+	// Tradeable Whether this asset can be traded directly
+	Tradeable *bool `json:"tradeable,omitempty"`
+
+	// Venue The trading venue to filter by.
+	// * **defi** — Decentralized exchange (on-chain swaps).
+	// * **cefi** — Centralized exchange (off-chain order book).
+	Venue   *Venue  `json:"venue,omitempty"`
+	Website *string `json:"website,omitempty"`
+}
+
+// AssetMarketData Supply-side market data
 type AssetMarketData struct {
 	CirculatingSupply *int64 `json:"circulating_supply,omitempty"`
 	MaxSupply         *int64 `json:"max_supply,omitempty"`
 	TotalSupply       *int64 `json:"total_supply,omitempty"`
 }
 
-// AssetSocials defines model for AssetSocials.
+// AssetNetwork A deposit/withdrawal network supported for a CeFi asset, together with any additional networks whose deposits route to the same address. This is the source of truth for the `network` field when creating a CeFi transfer via [`createTransfer`](#operation/createTransfer): that field must match this `network` or one of its `compatible_networks` (case-insensitive).
+type AssetNetwork struct {
+	// CompatibleNetworks Additional network names whose deposits route to the same address as `network`, including `network` itself. Any of these is an accepted `network` value for a CeFi transfer.
+	CompatibleNetworks []string `json:"compatible_networks"`
+
+	// Network Canonical network name for this deposit/withdrawal rail (e.g. `bitcoin`).
+	Network string `json:"network"`
+}
+
+// AssetSocials Social media links
 type AssetSocials struct {
 	FacebookUsername *string `json:"facebook_username,omitempty"`
 	OfficialForumUrl *string `json:"official_forum_url,omitempty"`
@@ -150,277 +323,558 @@ type AssetSocials struct {
 	XUsername        *string `json:"x_username,omitempty"`
 }
 
-// Balance defines model for Balance.
-type Balance struct {
-	Asset     *string             `json:"asset,omitempty"`
-	Balance   *string             `json:"balance,omitempty"`
-	Chain     *string             `json:"chain,omitempty"`
-	Decimals  *int                `json:"decimals,omitempty"`
-	Icon      *string             `json:"icon,omitempty"`
-	Id        *openapi_types.UUID `json:"id,omitempty"`
-	Name      *string             `json:"name,omitempty"`
-	Stable    *bool               `json:"stable,omitempty"`
-	Symbol    *string             `json:"symbol,omitempty"`
-	Tradeable *bool               `json:"tradeable,omitempty"`
+// BalanceItem A single asset balance on a specific venue
+type BalanceItem struct {
+	// Address Token contract/mint address, or null for exchange-held assets
+	Address *string `json:"address,omitempty"`
+
+	// Available Usable balance after holds (decimal string)
+	Available *string `json:"available,omitempty"`
+
+	// Chain Blockchain network ("solana", "base"), or null for exchange-held assets
+	Chain *string `json:"chain,omitempty"`
+
+	// Decimals Display precision (e.g. 8 for BTC, 6 for USDC)
+	Decimals *int `json:"decimals,omitempty"`
+
+	// Held Amount locked in orders or transfers (decimal string)
+	Held *string `json:"held,omitempty"`
+
+	// Name Human-readable asset name
+	Name *string `json:"name,omitempty"`
+
+	// Stable Whether this is a stablecoin
+	Stable *bool `json:"stable,omitempty"`
+
+	// Symbol Asset ticker symbol (e.g. BTC, USDC)
+	Symbol *string `json:"symbol,omitempty"`
+
+	// Total Gross balance including held amounts (decimal string)
+	Total *string `json:"total,omitempty"`
+
+	// Tradeable Whether this asset is active for trading
+	Tradeable *bool `json:"tradeable,omitempty"`
 }
 
-// BalanceResponse defines model for BalanceResponse.
-type BalanceResponse struct {
-	Balances *[]Balance `json:"balances,omitempty"`
+// CancelOrderResponseBody Response from the cancel endpoint. A resting DeFi order returns unsigned payloads the client must sign and submit to the cancel-execute endpoint. A CeFi order is canceled immediately and returns 202 with no payloads.
+type CancelOrderResponseBody struct {
+	// Payloads Unsigned cancel payloads the client signs and returns via the cancel-execute endpoint. Present for resting DeFi orders, absent for CeFi orders.
+	Payloads *[]UnsignedPayload `json:"payloads,omitempty"`
 }
 
-// CreateWalletRequest defines model for CreateWalletRequest.
-type CreateWalletRequest struct {
-	ApiKey struct {
-		PublicKey string `json:"public_key"`
-	} `json:"api_key"`
-}
+// Chain The blockchain network for DeFi orders. Omit for CeFi orders.
+// * **solana** — Execute the swap on the Solana blockchain.
+// * **base** — Execute the swap on the Base (Ethereum L2) blockchain.
+type Chain string
 
-// CreatedWallet defines model for CreatedWallet.
-type CreatedWallet struct {
-	Address         *string `json:"address,omitempty"`
-	AddressType     *string `json:"address_type,omitempty"`
-	WalletAccountId *string `json:"wallet_account_id,omitempty"`
-	WalletId        *string `json:"wallet_id,omitempty"`
-}
+// CreateOrderRequest Request to create a new order.
+//
+// **Limit orders** (`type: limit`):
+// - `price` is required and must be a positive decimal string
+// - `qty_unit` must be `base`
+// - `chain` must be omitted (CeFi limit order)
+//
+// **Market orders** (`type: market`):
+// - `price` is not accepted
+// - Buy orders require `qty_unit: quote`
+// - Sell orders accept `qty_unit: base` or `qty_unit: quote`
+// - `chain` is optional (omit for CeFi, include for DeFi)
+type CreateOrderRequest struct {
+	// BaseAsset Asset symbol for CeFi (e.g. `BTC`); token contract address on `chain` for DeFi.
+	BaseAsset string `json:"base_asset"`
 
-// OnrampRequest defines model for OnrampRequest.
-type OnrampRequest struct {
-	// Amount Fiat amount in USD to onramp
-	Amount string `json:"amount"`
+	// Chain Blockchain network for DeFi orders. Omit for CeFi orders.
+	Chain *Chain `json:"chain,omitempty"`
 
-	// Chain Blockchain chain (e.g. solana)
-	Chain string `json:"chain"`
+	// Price Limit price per unit of base asset as a decimal string. Required for limit orders; must not be sent for market orders.
+	Price *string `json:"price,omitempty"`
 
-	// PaymentMethod Payment method for the onramp
-	PaymentMethod OnrampRequestPaymentMethod `json:"payment_method"`
-}
-
-// OnrampRequestPaymentMethod Payment method for the onramp
-type OnrampRequestPaymentMethod string
-
-// OnrampResponse defines model for OnrampResponse.
-type OnrampResponse struct {
-	// Url Time-limited Coinbase onramp URL with embedded session token
-	Url *string `json:"url,omitempty"`
-}
-
-// ProfileResponse defines model for ProfileResponse.
-type ProfileResponse struct {
-	Email   *openapi_types.Email `json:"email,omitempty"`
-	Id      *string              `json:"id,omitempty"`
-	Wallets *[]Wallet            `json:"wallets,omitempty"`
-}
-
-// QuoteIssue defines model for QuoteIssue.
-type QuoteIssue struct {
-	Balance *QuoteIssueBalance `json:"balance,omitempty"`
-	Message string             `json:"message"`
-}
-
-// QuoteIssueBalance defines model for QuoteIssueBalance.
-type QuoteIssueBalance struct {
-	Actual   string `json:"actual"`
-	Expected string `json:"expected"`
-}
-
-// QuoteRequest defines model for QuoteRequest.
-type QuoteRequest struct {
-	BaseAsset  string                `json:"base_asset"`
-	Chain      string                `json:"chain"`
-	OrderSide  QuoteRequestOrderSide `json:"order_side"`
-	Qty        string                `json:"qty"`
-	QuoteAsset string                `json:"quote_asset"`
-}
-
-// QuoteRequestOrderSide defines model for QuoteRequest.OrderSide.
-type QuoteRequestOrderSide string
-
-// QuoteResponse defines model for QuoteResponse.
-type QuoteResponse struct {
-	BaseAsset  string            `json:"base_asset"`
-	Fee        string            `json:"fee"`
-	FeeAsset   string            `json:"fee_asset"`
-	Issues     []QuoteIssue      `json:"issues"`
-	OrderSide  string            `json:"order_side"`
-	Payloads   []UnsignedPayload `json:"payloads"`
-	Qty        string            `json:"qty"`
-	QtyOut     string            `json:"qty_out"`
-	QuoteAsset string            `json:"quote_asset"`
-	QuoteId    string            `json:"quote_id"`
-}
-
-// TradeRequest Trade execution request. Signatures are matched to cached server-side payloads.
-type TradeRequest struct {
-	// AuthType The authentication type used for signing
-	AuthType TradeRequestAuthType `json:"auth_type"`
-
-	// QuoteId The quote ID returned from the quote endpoint
-	QuoteId string `json:"quote_id"`
-
-	// Signatures Signatures for the payloads returned from the quote endpoint (in order)
-	Signatures []string `json:"signatures"`
-}
-
-// TradeRequestAuthType The authentication type used for signing
-type TradeRequestAuthType string
-
-// TradeResponse Synchronous trade response with order ID and transaction hash
-type TradeResponse struct {
-	// OrderId The created order ID
-	OrderId *openapi_types.UUID `json:"order_id,omitempty"`
-
-	// TxHash The blockchain transaction hash
-	TxHash *string `json:"tx_hash,omitempty"`
-}
-
-// TransferExecuteRequest defines model for TransferExecuteRequest.
-type TransferExecuteRequest struct {
-	// AuthType The authentication type used for signing
-	AuthType   TransferExecuteRequestAuthType `json:"auth_type"`
-	Signatures []string                       `json:"signatures"`
-	TransferId openapi_types.UUID             `json:"transfer_id"`
-}
-
-// TransferExecuteRequestAuthType The authentication type used for signing
-type TransferExecuteRequestAuthType string
-
-// TransferExecuteResponse defines model for TransferExecuteResponse.
-type TransferExecuteResponse struct {
-	Asset    *string `json:"asset,omitempty"`
-	Chain    *string `json:"chain,omitempty"`
-	Fee      *string `json:"fee,omitempty"`
-	From     *string `json:"from,omitempty"`
-	Received *string `json:"received,omitempty"`
-	Sent     *string `json:"sent,omitempty"`
-	To       *string `json:"to,omitempty"`
-	TxHash   *string `json:"tx_hash,omitempty"`
-}
-
-// TransferPrepareRequest defines model for TransferPrepareRequest.
-type TransferPrepareRequest struct {
-	// Asset Asset contract address
-	Asset string `json:"asset"`
-
-	// Chain Blockchain chain (e.g., solana, base)
-	Chain string `json:"chain"`
-
-	// Qty Transfer quantity
+	// Qty Quantity as a positive decimal string
 	Qty string `json:"qty"`
 
-	// QtyUnit Unit of quantity (base for token amount, quote for USD)
-	QtyUnit TransferPrepareRequestQtyUnit `json:"qty_unit"`
+	// QtyUnit Unit of the quantity.
+	// * **base** — Quantity is denominated in the base asset. Required for limit orders. Supported for market sell orders.
+	// * **quote** — Quantity is denominated in the quote asset. Required for market buy orders. For DeFi sell orders, `base` must be used instead.
+	QtyUnit CreateOrderRequestQtyUnit `json:"qty_unit"`
 
-	// To Recipient address
+	// QuoteAsset Asset symbol for CeFi (e.g. `USDC`). Optional for DeFi, which resolves the quote asset per chain and ignores any supplied value.
+	QuoteAsset *string `json:"quote_asset,omitempty"`
+
+	// Side The side of the order.
+	// * **buy** — Purchase the base asset using the quote asset.
+	// * **sell** — Sell the base asset in exchange for the quote asset.
+	Side OrderSide `json:"side"`
+
+	// Type The type of order to place.
+	// * **market** — Execute immediately at the best available price. Buy orders require `qty_unit: quote`. Price must not be specified.
+	// * **limit** — Place an order at a specific price on CeFi. Requires `price` and `qty_unit: base`; omit `chain`.
+	Type OrderType `json:"type"`
+}
+
+// CreateOrderRequestQtyUnit Unit of the quantity.
+// * **base** — Quantity is denominated in the base asset. Required for limit orders. Supported for market sell orders.
+// * **quote** — Quantity is denominated in the quote asset. Required for market buy orders. For DeFi sell orders, `base` must be used instead.
+type CreateOrderRequestQtyUnit string
+
+// CreateOrderResponseBody Response from creating an order. For DeFi orders (and CeFi buy orders requiring a funding bridge), the response includes unsigned payloads that must be signed by the client and submitted via the execute endpoint. For CeFi sell orders and sufficiently funded CeFi buy orders, the order is submitted immediately and no payloads are returned.
+type CreateOrderResponseBody struct {
+	// OrderId Unique order identifier
+	OrderId *string `json:"order_id,omitempty"`
+
+	// Payloads Unsigned transaction payloads that the client must sign and return via the execute endpoint. Present for DeFi orders and CeFi buy orders that require a funding bridge. Empty or absent when the order is submitted immediately (e.g. CeFi sell orders).
+	Payloads *[]UnsignedPayload `json:"payloads,omitempty"`
+
+	// Quote Detailed quote information returned with DeFi order creation, showing expected swap output and fees
+	Quote *QuoteDetails `json:"quote,omitempty"`
+
+	// Status The current status of the order.
+	// * **initialized** — Order has been created but not yet submitted. For DeFi orders, the client must sign the returned payloads and call the execute endpoint. For CeFi buy orders with insufficient balance, a funding bridge is prepared first.
+	// * **pending** — Order has been submitted but is not yet confirmed by the CeFi exchange or on-chain.
+	// * **active** — Order was accepted by the CeFi exchange and is open for trading. Applies to limit orders that are working in the order book.
+	// * **cancel_pending** — A cancellation request has been sent to the CeFi exchange and is awaiting confirmation.
+	// * **complete** — Order has been fully executed. For CeFi orders this means the CeFi exchange reported a fill; for DeFi orders the on-chain swap was confirmed.
+	// * **canceled** — Order was successfully canceled via a cancel request or by exchange/market conditions.
+	// * **failed** — Order was rejected by the CeFi exchange or DeFi execution failed (e.g. on-chain transaction reverted, balance check failed).
+	Status *OrderStatus `json:"status,omitempty"`
+
+	// WebAuthnPayload WebAuthn payload (deprecated, use payloads instead)
+	// Deprecated: this property has been marked as deprecated upstream, but no `x-deprecated-reason` was set
+	WebAuthnPayload *string `json:"web_authn_payload,omitempty"`
+}
+
+// CreateTransferRequest Request to create a new on-chain transfer
+type CreateTransferRequest struct {
+	// AssetId Asset identifier (UUID)
+	AssetId openapi_types.UUID `json:"asset_id"`
+
+	// Network Destination network for the withdrawal. **Required for CeFi transfers** and **must be omitted for DeFi transfers** (DeFi derives the network from the asset's chain).
+	//
+	// The set of supported networks is asset-specific and is retrieved from the [`listAssets`](#operation/listAssets) (`GET /assets`) response: for the asset whose `id` equals this request's `asset_id`, `network` must match one of that asset's `networks[].network` values or any of their `networks[].compatible_networks` values. Matching is case-insensitive. Supplying an unsupported network returns `400 Bad Request`.
+	Network *string `json:"network,omitempty"`
+
+	// Qty Transfer quantity as a positive decimal string
+	Qty string `json:"qty"`
+
+	// QtyUnit Unit of the quantity.
+	// * **base** — Quantity is denominated in the base asset.
+	// * **quote** — Quantity is denominated in the quote asset.
+	QtyUnit CreateTransferRequestQtyUnit `json:"qty_unit"`
+
+	// To Destination wallet address
 	To string `json:"to"`
 }
 
-// TransferPrepareRequestQtyUnit Unit of quantity (base for token amount, quote for USD)
-type TransferPrepareRequestQtyUnit string
+// CreateTransferRequestQtyUnit Unit of the quantity.
+// * **base** — Quantity is denominated in the base asset.
+// * **quote** — Quantity is denominated in the quote asset.
+type CreateTransferRequestQtyUnit string
 
-// TransferPrepareResponse defines model for TransferPrepareResponse.
-type TransferPrepareResponse struct {
-	Payloads   *[]UnsignedPayload  `json:"payloads,omitempty"`
-	TransferId *openapi_types.UUID `json:"transfer_id,omitempty"`
+// ErrorResponse Error response
+type ErrorResponse struct {
+	// Message Error message
+	Message *string `json:"message,omitempty"`
 }
 
-// UnsignedPayload defines model for UnsignedPayload.
+// ExecuteOrderRequest Request to execute an order that is in `initialized` status. The client must sign each payload returned by the create endpoint and submit the signatures in the same order.
+type ExecuteOrderRequest struct {
+	// AuthType The authentication method used to sign transaction payloads.
+	// * **web_authn** — Signed using a passkey (WebAuthn/FIDO2 credential) via the browser.
+	// * **api_key** — Signed using an API key. Suitable for programmatic/headless access.
+	AuthType SigningMethod `json:"auth_type"`
+
+	// Signatures Signed stamps for the unsigned payloads, in the same order as the payloads returned by the create endpoint. Each signature corresponds to one payload.
+	Signatures []string `json:"signatures"`
+}
+
+// ExecuteOrderResponseBody Response from executing an order. For DeFi orders, a successful execution transitions the order directly to `complete`. For CeFi orders, the order moves to `pending` while it is processed by the CeFi exchange.
+type ExecuteOrderResponseBody struct {
+	// Status The current status of the order.
+	// * **initialized** — Order has been created but not yet submitted. For DeFi orders, the client must sign the returned payloads and call the execute endpoint. For CeFi buy orders with insufficient balance, a funding bridge is prepared first.
+	// * **pending** — Order has been submitted but is not yet confirmed by the CeFi exchange or on-chain.
+	// * **active** — Order was accepted by the CeFi exchange and is open for trading. Applies to limit orders that are working in the order book.
+	// * **cancel_pending** — A cancellation request has been sent to the CeFi exchange and is awaiting confirmation.
+	// * **complete** — Order has been fully executed. For CeFi orders this means the CeFi exchange reported a fill; for DeFi orders the on-chain swap was confirmed.
+	// * **canceled** — Order was successfully canceled via a cancel request or by exchange/market conditions.
+	// * **failed** — Order was rejected by the CeFi exchange or DeFi execution failed (e.g. on-chain transaction reverted, balance check failed).
+	Status *OrderStatus `json:"status,omitempty"`
+}
+
+// ExecuteTransferRequest Request to execute a transfer that is in `awaiting_signature` status. The client must sign each payload returned by the create endpoint and submit the signatures in the same order.
+type ExecuteTransferRequest struct {
+	// AuthType The authentication method used to sign transaction payloads.
+	// * **web_authn** — Signed using a passkey (WebAuthn/FIDO2 credential) via the browser.
+	// * **api_key** — Signed using an API key. Suitable for programmatic/headless access.
+	AuthType SigningMethod `json:"auth_type"`
+
+	// Signatures Signed stamps for the unsigned payloads, in the same order as the payloads returned by the create endpoint.
+	Signatures []string `json:"signatures"`
+}
+
+// GetOrderStatusResponseBody Order status response
+type GetOrderStatusResponseBody struct {
+	// Status The current status of the order.
+	// * **initialized** — Order has been created but not yet submitted. For DeFi orders, the client must sign the returned payloads and call the execute endpoint. For CeFi buy orders with insufficient balance, a funding bridge is prepared first.
+	// * **pending** — Order has been submitted but is not yet confirmed by the CeFi exchange or on-chain.
+	// * **active** — Order was accepted by the CeFi exchange and is open for trading. Applies to limit orders that are working in the order book.
+	// * **cancel_pending** — A cancellation request has been sent to the CeFi exchange and is awaiting confirmation.
+	// * **complete** — Order has been fully executed. For CeFi orders this means the CeFi exchange reported a fill; for DeFi orders the on-chain swap was confirmed.
+	// * **canceled** — Order was successfully canceled via a cancel request or by exchange/market conditions.
+	// * **failed** — Order was rejected by the CeFi exchange or DeFi execution failed (e.g. on-chain transaction reverted, balance check failed).
+	Status *OrderStatus `json:"status,omitempty"`
+}
+
+// GetOrdersResponse Paginated list of orders with execution data
+type GetOrdersResponse struct {
+	// Data List of orders
+	Data *[]OrderDetail `json:"data,omitempty"`
+
+	// Pagination Cursor-based pagination metadata
+	Pagination *Pagination `json:"pagination,omitempty"`
+}
+
+// ListAssetsResponseBody Paginated list of tradeable assets
+type ListAssetsResponseBody struct {
+	Data *[]AssetItem `json:"data,omitempty"`
+
+	// Pagination Cursor-based pagination metadata
+	Pagination *Pagination `json:"pagination,omitempty"`
+}
+
+// ListBalancesResponseBody Unified balances across CeFi and DeFi venues
+type ListBalancesResponseBody struct {
+	// Data List of asset balances
+	Data *[]BalanceItem `json:"data,omitempty"`
+}
+
+// ListTransfersResponseBody Paginated list of transfers
+type ListTransfersResponseBody struct {
+	// Data List of transfers
+	Data *[]TransferDetail `json:"data,omitempty"`
+
+	// Pagination Cursor-based pagination metadata
+	Pagination *Pagination `json:"pagination,omitempty"`
+}
+
+// ModifyOrderRequest Request to modify an active limit order. At least one of `price` or `qty` must be supplied; any field that is omitted is left unchanged.
+type ModifyOrderRequest struct {
+	// Price New limit price per unit of base asset as a positive decimal string.
+	Price *string `json:"price,omitempty"`
+
+	// Qty New quantity as a positive decimal string.
+	Qty *string `json:"qty,omitempty"`
+}
+
+// OrderDetail Order with execution data, returned by the list-orders and get-order endpoints for orders of any status. Includes fill information from the CeFi exchange for CeFi orders.
+type OrderDetail struct {
+	// BaseAsset Base asset identifier (e.g. `BTC`, `ETH`, `SOL`)
+	BaseAsset *string `json:"base_asset,omitempty"`
+
+	// CreatedAt Timestamp when the order was created (RFC 3339)
+	CreatedAt *time.Time `json:"created_at,omitempty"`
+
+	// ExecutedQty Quantity of the base asset that has been filled so far
+	ExecutedQty *string `json:"executed_qty,omitempty"`
+
+	// ExecutedVwap Volume-weighted average price across all fills for this order
+	ExecutedVwap *string `json:"executed_vwap,omitempty"`
+
+	// Fee Total fee charged for this order in the quote asset. For CeFi orders this is the cumulative `trade_fee` across all fills; for DeFi orders it is the service fee captured at quote time, written once on confirmation.
+	Fee *string `json:"fee,omitempty"`
+
+	// LeavesQty Remaining base asset quantity yet to be filled. Zero when the order is complete.
+	LeavesQty *string `json:"leaves_qty,omitempty"`
+
+	// OrderId Unique order identifier
+	OrderId *string `json:"order_id,omitempty"`
+
+	// Price For limit orders, the limit price submitted. For market orders, the reference price at order creation. Null when no price was recorded.
+	Price *string `json:"price,omitempty"`
+
+	// Qty Original order quantity in the denomination specified by `qty_unit` at creation
+	Qty *string `json:"qty,omitempty"`
+
+	// QuoteAsset Quote asset identifier (e.g. `USD`, `USDC`)
+	QuoteAsset *string `json:"quote_asset,omitempty"`
+
+	// Side The side of the order.
+	// * **buy** — Purchase the base asset using the quote asset.
+	// * **sell** — Sell the base asset in exchange for the quote asset.
+	Side *OrderSide `json:"side,omitempty"`
+
+	// Status The current status of the order.
+	// * **initialized** — Order has been created but not yet submitted. For DeFi orders, the client must sign the returned payloads and call the execute endpoint. For CeFi buy orders with insufficient balance, a funding bridge is prepared first.
+	// * **pending** — Order has been submitted but is not yet confirmed by the CeFi exchange or on-chain.
+	// * **active** — Order was accepted by the CeFi exchange and is open for trading. Applies to limit orders that are working in the order book.
+	// * **cancel_pending** — A cancellation request has been sent to the CeFi exchange and is awaiting confirmation.
+	// * **complete** — Order has been fully executed. For CeFi orders this means the CeFi exchange reported a fill; for DeFi orders the on-chain swap was confirmed.
+	// * **canceled** — Order was successfully canceled via a cancel request or by exchange/market conditions.
+	// * **failed** — Order was rejected by the CeFi exchange or DeFi execution failed (e.g. on-chain transaction reverted, balance check failed).
+	Status *OrderStatus `json:"status,omitempty"`
+
+	// TxHash On-chain transaction hash for DeFi orders. Omitted for CeFi orders.
+	TxHash *string `json:"tx_hash,omitempty"`
+
+	// Type The type of order to place.
+	// * **market** — Execute immediately at the best available price. Buy orders require `qty_unit: quote`. Price must not be specified.
+	// * **limit** — Place an order at a specific price on CeFi. Requires `price` and `qty_unit: base`; omit `chain`.
+	Type *OrderType `json:"type,omitempty"`
+
+	// Venue The trading venue to filter by.
+	// * **defi** — Decentralized exchange (on-chain swaps).
+	// * **cefi** — Centralized exchange (off-chain order book).
+	Venue *Venue `json:"venue,omitempty"`
+}
+
+// OrderSide The side of the order.
+// * **buy** — Purchase the base asset using the quote asset.
+// * **sell** — Sell the base asset in exchange for the quote asset.
+type OrderSide string
+
+// OrderStatus The current status of the order.
+// * **initialized** — Order has been created but not yet submitted. For DeFi orders, the client must sign the returned payloads and call the execute endpoint. For CeFi buy orders with insufficient balance, a funding bridge is prepared first.
+// * **pending** — Order has been submitted but is not yet confirmed by the CeFi exchange or on-chain.
+// * **active** — Order was accepted by the CeFi exchange and is open for trading. Applies to limit orders that are working in the order book.
+// * **cancel_pending** — A cancellation request has been sent to the CeFi exchange and is awaiting confirmation.
+// * **complete** — Order has been fully executed. For CeFi orders this means the CeFi exchange reported a fill; for DeFi orders the on-chain swap was confirmed.
+// * **canceled** — Order was successfully canceled via a cancel request or by exchange/market conditions.
+// * **failed** — Order was rejected by the CeFi exchange or DeFi execution failed (e.g. on-chain transaction reverted, balance check failed).
+type OrderStatus string
+
+// OrderType The type of order to place.
+// * **market** — Execute immediately at the best available price. Buy orders require `qty_unit: quote`. Price must not be specified.
+// * **limit** — Place an order at a specific price on CeFi. Requires `price` and `qty_unit: base`; omit `chain`.
+type OrderType string
+
+// Pagination Cursor-based pagination metadata
+type Pagination struct {
+	// Limit Number of items per page
+	Limit *int `json:"limit,omitempty"`
+
+	// NextCursor RFC3339 timestamp cursor for next page, null if no more data
+	NextCursor *time.Time `json:"next_cursor,omitempty"`
+}
+
+// QuoteDetails Detailed quote information returned with DeFi order creation, showing expected swap output and fees
+type QuoteDetails struct {
+	// BaseAsset Base asset identifier (e.g. `SOL`, `ETH`)
+	BaseAsset *string `json:"base_asset,omitempty"`
+
+	// Fee Platform fee amount as a decimal string
+	Fee *string `json:"fee,omitempty"`
+
+	// FeeAsset Asset in which the fee is denominated (e.g. `USDC`)
+	FeeAsset *string `json:"fee_asset,omitempty"`
+
+	// Issues Warnings about the quote (e.g. high price impact, low liquidity). Empty when there are no issues.
+	Issues *[]string `json:"issues,omitempty"`
+
+	// Qty Input quantity as a decimal string — the amount being swapped from
+	Qty *string `json:"qty,omitempty"`
+
+	// QtyOut Expected output quantity as a decimal string — the amount the user will receive after fees
+	QtyOut *string `json:"qty_out,omitempty"`
+
+	// QuoteAsset Quote asset identifier (e.g. `USDC`)
+	QuoteAsset *string `json:"quote_asset,omitempty"`
+}
+
+// QuoteRequest Request to compute a market quote
+type QuoteRequest struct {
+	// BaseAsset Base asset identifier (e.g. `BTC`, `ETH`, `SOL`)
+	BaseAsset string `json:"base_asset"`
+
+	// Qty Quantity as a positive decimal string
+	Qty string `json:"qty"`
+
+	// QtyUnit Unit of the quantity.
+	// * **base** — Quantity is denominated in the base asset (e.g. 0.5 BTC).
+	// * **quote** — Quantity is denominated in the quote asset (e.g. 1000 USD).
+	QtyUnit QuoteRequestQtyUnit `json:"qty_unit"`
+
+	// QuoteAsset Quote asset identifier (e.g. `USD`, `USDC`)
+	QuoteAsset string `json:"quote_asset"`
+
+	// Side The side of the order.
+	// * **buy** — Purchase the base asset using the quote asset.
+	// * **sell** — Sell the base asset in exchange for the quote asset.
+	Side OrderSide `json:"side"`
+}
+
+// QuoteRequestQtyUnit Unit of the quantity.
+// * **base** — Quantity is denominated in the base asset (e.g. 0.5 BTC).
+// * **quote** — Quantity is denominated in the quote asset (e.g. 1000 USD).
+type QuoteRequestQtyUnit string
+
+// QuoteResponse Quote computation result with the expected output quantity and execution price
+type QuoteResponse struct {
+	// Price Effective execution price per unit of base asset as a decimal string
+	Price *string `json:"price,omitempty"`
+
+	// Qty Expected output quantity as a decimal string. For a buy order this is the amount of base asset received; for a sell order it is the amount of quote asset received.
+	Qty *string `json:"qty,omitempty"`
+}
+
+// SigningMethod The authentication method used to sign transaction payloads.
+// * **web_authn** — Signed using a passkey (WebAuthn/FIDO2 credential) via the browser.
+// * **api_key** — Signed using an API key. Suitable for programmatic/headless access.
+type SigningMethod string
+
+// TransferDetail Canonical representation of a transfer.
+type TransferDetail struct {
+	// AssetId Asset identifier
+	AssetId openapi_types.UUID `json:"asset_id"`
+
+	// AssetSymbol Asset ticker symbol (e.g. `USDC`, `SOL`)
+	AssetSymbol string `json:"asset_symbol"`
+
+	// Chain Blockchain network (e.g. `solana`, `base`) for DeFi transfers, or null for CeFi transfers
+	Chain string `json:"chain"`
+
+	// CreatedAt Timestamp when the transfer was created (RFC 3339)
+	CreatedAt time.Time `json:"created_at"`
+
+	// Fee Fee as a decimal string
+	Fee string `json:"fee"`
+
+	// Id Unique transfer identifier
+	Id openapi_types.UUID `json:"id"`
+
+	// Network Destination network the CeFi withdrawal was submitted on (one of the asset's supported networks from `GET /assets`), or null for DeFi transfers.
+	Network string `json:"network"`
+
+	// Payloads Unsigned transaction payloads for the client to sign. Present when status is `awaiting_signature`; empty array after execution.
+	Payloads []UnsignedPayload `json:"payloads"`
+
+	// Qty Transfer quantity as a decimal string
+	Qty string `json:"qty"`
+
+	// QtyUnit Unit of the quantity
+	QtyUnit TransferDetailQtyUnit `json:"qty_unit"`
+
+	// Received Amount received as a decimal string
+	Received string `json:"received"`
+
+	// Sent Amount sent as a decimal string
+	Sent string `json:"sent"`
+
+	// Status The current status of the transfer.
+	// * **awaiting_signature** — Transfer has been created and is waiting for the client to sign the unsigned payloads and call the execute endpoint.
+	// * **pending** — Signed transaction has been submitted and is awaiting on-chain confirmation.
+	// * **completed** — Transfer has been confirmed on-chain.
+	// * **failed** — Transfer failed due to an on-chain error or rejection.
+	Status TransferStatus `json:"status"`
+
+	// To Destination wallet address
+	To string `json:"to"`
+
+	// TxHash On-chain transaction hash
+	TxHash string `json:"tx_hash"`
+
+	// UpdatedAt Timestamp of the last status update (RFC 3339)
+	UpdatedAt time.Time `json:"updated_at"`
+
+	// Venue Trading venue (e.g. `defi`)
+	Venue string `json:"venue"`
+}
+
+// TransferDetailQtyUnit Unit of the quantity
+type TransferDetailQtyUnit string
+
+// TransferStatus The current status of the transfer.
+// * **awaiting_signature** — Transfer has been created and is waiting for the client to sign the unsigned payloads and call the execute endpoint.
+// * **pending** — Signed transaction has been submitted and is awaiting on-chain confirmation.
+// * **completed** — Transfer has been confirmed on-chain.
+// * **failed** — Transfer failed due to an on-chain error or rejection.
+type TransferStatus string
+
+// UnsignedPayload An unsigned transaction payload that the client must sign before executing the order. Sign each payload using your API key or WebAuthn credential, then submit the resulting stamps to the execute endpoint in the same order.
 type UnsignedPayload struct {
-	Digest  string `json:"digest"`
+	// Digest SHA-256 hash of the payload, used as the signing input
+	Digest string `json:"digest"`
+
+	// Payload Base64-encoded transaction payload to be signed
 	Payload string `json:"payload"`
 }
 
-// Wallet defines model for Wallet.
-type Wallet struct {
-	Address *string `json:"address,omitempty"`
-	Chain   *string `json:"chain,omitempty"`
+// Venue The trading venue to filter by.
+// * **defi** — Decentralized exchange (on-chain swaps).
+// * **cefi** — Centralized exchange (off-chain order book).
+type Venue string
+
+// BadRequest Error response
+type BadRequest = ErrorResponse
+
+// Conflict Error response
+type Conflict = ErrorResponse
+
+// Forbidden Error response
+type Forbidden = ErrorResponse
+
+// InternalError Error response
+type InternalError = ErrorResponse
+
+// NotFound Error response
+type NotFound = ErrorResponse
+
+// ServiceUnavailable Error response
+type ServiceUnavailable = ErrorResponse
+
+// Unauthorized Error response
+type Unauthorized = ErrorResponse
+
+// ListAssetsParams defines parameters for ListAssets.
+type ListAssetsParams struct {
+	// Venue Filter by trading venue
+	Venue *Venue `form:"venue,omitempty" json:"venue,omitempty"`
 }
 
-// WalletCreationResult defines model for WalletCreationResult.
-type WalletCreationResult struct {
-	Wallets *[]CreatedWallet `json:"wallets,omitempty"`
+// ListOrdersParams defines parameters for ListOrders.
+type ListOrdersParams struct {
+	// Limit Maximum number of orders to return
+	Limit *int `form:"limit,omitempty" json:"limit,omitempty"`
+
+	// Cursor RFC3339 timestamp cursor for pagination
+	Cursor *time.Time `form:"cursor,omitempty" json:"cursor,omitempty"`
+
+	// Status Comma-separated list of order statuses to filter by
+	Status *string `form:"status,omitempty" json:"status,omitempty"`
+
+	// Venue Comma-separated list of trading venues to filter by (`defi`, `cefi`). Defaults to all venues (`cefi,defi`) when omitted.
+	Venue *string `form:"venue,omitempty" json:"venue,omitempty"`
 }
 
-// Version defines model for version.
-type Version = string
+// ListTransfersParams defines parameters for ListTransfers.
+type ListTransfersParams struct {
+	// Status Filter by transfer status
+	Status *TransferStatus `form:"status,omitempty" json:"status,omitempty"`
 
-// GetAssetsParams defines parameters for GetAssets.
-type GetAssetsParams struct {
-	// Version API version date (YYYY-MM-DD)
-	Version *Version `form:"version,omitempty" json:"version,omitempty"`
+	// Cursor Pagination cursor
+	Cursor *string `form:"cursor,omitempty" json:"cursor,omitempty"`
 
-	// Evm Include EVM chain assets
-	Evm *bool `form:"evm,omitempty" json:"evm,omitempty"`
+	// Limit Maximum number of transfers to return
+	Limit *int `form:"limit,omitempty" json:"limit,omitempty"`
 }
 
-// GetBalancesParams defines parameters for GetBalances.
-type GetBalancesParams struct {
-	// Version API version date (YYYY-MM-DD)
-	Version *Version `form:"version,omitempty" json:"version,omitempty"`
+// CreateOrderJSONRequestBody defines body for CreateOrder for application/json ContentType.
+type CreateOrderJSONRequestBody = CreateOrderRequest
 
-	// Evm Include EVM chain balances
-	Evm *bool `form:"evm,omitempty" json:"evm,omitempty"`
-}
+// ModifyOrderJSONRequestBody defines body for ModifyOrder for application/json ContentType.
+type ModifyOrderJSONRequestBody = ModifyOrderRequest
 
-// CreateWalletParams defines parameters for CreateWallet.
-type CreateWalletParams struct {
-	// Version API version date (YYYY-MM-DD)
-	Version *Version `form:"version,omitempty" json:"version,omitempty"`
-}
+// ExecuteCancelOrderJSONRequestBody defines body for ExecuteCancelOrder for application/json ContentType.
+type ExecuteCancelOrderJSONRequestBody = ExecuteOrderRequest
 
-// CreateOnrampParams defines parameters for CreateOnramp.
-type CreateOnrampParams struct {
-	// Version API version date (YYYY-MM-DD)
-	Version *Version `form:"version,omitempty" json:"version,omitempty"`
-}
+// ExecuteOrderJSONRequestBody defines body for ExecuteOrder for application/json ContentType.
+type ExecuteOrderJSONRequestBody = ExecuteOrderRequest
 
-// GetProfileParams defines parameters for GetProfile.
-type GetProfileParams struct {
-	// Version API version date (YYYY-MM-DD)
-	Version *Version `form:"version,omitempty" json:"version,omitempty"`
-}
+// ComputeQuoteJSONRequestBody defines body for ComputeQuote for application/json ContentType.
+type ComputeQuoteJSONRequestBody = QuoteRequest
 
-// CreateQuoteParams defines parameters for CreateQuote.
-type CreateQuoteParams struct {
-	// Version API version date (YYYY-MM-DD)
-	Version *Version `form:"version,omitempty" json:"version,omitempty"`
-}
-
-// ExecuteTradeParams defines parameters for ExecuteTrade.
-type ExecuteTradeParams struct {
-	// Version API version date (YYYY-MM-DD)
-	Version *Version `form:"version,omitempty" json:"version,omitempty"`
-}
-
-// ExecuteTransferParams defines parameters for ExecuteTransfer.
-type ExecuteTransferParams struct {
-	// Version API version date (YYYY-MM-DD)
-	Version *Version `form:"version,omitempty" json:"version,omitempty"`
-}
-
-// PrepareTransferParams defines parameters for PrepareTransfer.
-type PrepareTransferParams struct {
-	// Version API version date (YYYY-MM-DD)
-	Version *Version `form:"version,omitempty" json:"version,omitempty"`
-}
-
-// CreateWalletJSONRequestBody defines body for CreateWallet for application/json ContentType.
-type CreateWalletJSONRequestBody = CreateWalletRequest
-
-// CreateOnrampJSONRequestBody defines body for CreateOnramp for application/json ContentType.
-type CreateOnrampJSONRequestBody = OnrampRequest
-
-// CreateQuoteJSONRequestBody defines body for CreateQuote for application/json ContentType.
-type CreateQuoteJSONRequestBody = QuoteRequest
-
-// ExecuteTradeJSONRequestBody defines body for ExecuteTrade for application/json ContentType.
-type ExecuteTradeJSONRequestBody = TradeRequest
+// CreateTransferJSONRequestBody defines body for CreateTransfer for application/json ContentType.
+type CreateTransferJSONRequestBody = CreateTransferRequest
 
 // ExecuteTransferJSONRequestBody defines body for ExecuteTransfer for application/json ContentType.
-type ExecuteTransferJSONRequestBody = TransferExecuteRequest
-
-// PrepareTransferJSONRequestBody defines body for PrepareTransfer for application/json ContentType.
-type PrepareTransferJSONRequestBody = TransferPrepareRequest
+type ExecuteTransferJSONRequestBody = ExecuteTransferRequest
 
 // RequestEditorFn  is the function signature for the RequestEditor callback function
 type RequestEditorFn func(ctx context.Context, req *http.Request) error
@@ -495,48 +949,74 @@ func WithRequestEditorFn(fn RequestEditorFn) ClientOption {
 
 // The interface specification for the client above.
 type ClientInterface interface {
-	// GetAssets request
-	GetAssets(ctx context.Context, params *GetAssetsParams, reqEditors ...RequestEditorFn) (*http.Response, error)
+	// ListAssets request
+	ListAssets(ctx context.Context, params *ListAssetsParams, reqEditors ...RequestEditorFn) (*http.Response, error)
 
 	// GetBalances request
-	GetBalances(ctx context.Context, params *GetBalancesParams, reqEditors ...RequestEditorFn) (*http.Response, error)
+	GetBalances(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error)
 
-	// CreateWalletWithBody request with any body
-	CreateWalletWithBody(ctx context.Context, params *CreateWalletParams, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
+	// ListBalances request
+	ListBalances(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error)
 
-	CreateWallet(ctx context.Context, params *CreateWalletParams, body CreateWalletJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
+	// ListOrders request
+	ListOrders(ctx context.Context, params *ListOrdersParams, reqEditors ...RequestEditorFn) (*http.Response, error)
 
-	// CreateOnrampWithBody request with any body
-	CreateOnrampWithBody(ctx context.Context, params *CreateOnrampParams, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
+	// CreateOrderWithBody request with any body
+	CreateOrderWithBody(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
 
-	CreateOnramp(ctx context.Context, params *CreateOnrampParams, body CreateOnrampJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
+	CreateOrder(ctx context.Context, body CreateOrderJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
 
-	// GetProfile request
-	GetProfile(ctx context.Context, params *GetProfileParams, reqEditors ...RequestEditorFn) (*http.Response, error)
+	// CancelOrder request
+	CancelOrder(ctx context.Context, id string, reqEditors ...RequestEditorFn) (*http.Response, error)
 
-	// CreateQuoteWithBody request with any body
-	CreateQuoteWithBody(ctx context.Context, params *CreateQuoteParams, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
+	// GetOrder request
+	GetOrder(ctx context.Context, id string, reqEditors ...RequestEditorFn) (*http.Response, error)
 
-	CreateQuote(ctx context.Context, params *CreateQuoteParams, body CreateQuoteJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
+	// ModifyOrderWithBody request with any body
+	ModifyOrderWithBody(ctx context.Context, id string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
 
-	// ExecuteTradeWithBody request with any body
-	ExecuteTradeWithBody(ctx context.Context, params *ExecuteTradeParams, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
+	ModifyOrder(ctx context.Context, id string, body ModifyOrderJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
 
-	ExecuteTrade(ctx context.Context, params *ExecuteTradeParams, body ExecuteTradeJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
+	// PrepareCancelOrder request
+	PrepareCancelOrder(ctx context.Context, id string, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// ExecuteCancelOrderWithBody request with any body
+	ExecuteCancelOrderWithBody(ctx context.Context, id string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	ExecuteCancelOrder(ctx context.Context, id string, body ExecuteCancelOrderJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// ExecuteOrderWithBody request with any body
+	ExecuteOrderWithBody(ctx context.Context, id string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	ExecuteOrder(ctx context.Context, id string, body ExecuteOrderJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// GetOrderStatus request
+	GetOrderStatus(ctx context.Context, id string, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// ComputeQuoteWithBody request with any body
+	ComputeQuoteWithBody(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	ComputeQuote(ctx context.Context, body ComputeQuoteJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// ListTransfers request
+	ListTransfers(ctx context.Context, params *ListTransfersParams, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// CreateTransferWithBody request with any body
+	CreateTransferWithBody(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	CreateTransfer(ctx context.Context, body CreateTransferJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// GetTransfer request
+	GetTransfer(ctx context.Context, id openapi_types.UUID, reqEditors ...RequestEditorFn) (*http.Response, error)
 
 	// ExecuteTransferWithBody request with any body
-	ExecuteTransferWithBody(ctx context.Context, params *ExecuteTransferParams, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
+	ExecuteTransferWithBody(ctx context.Context, id openapi_types.UUID, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
 
-	ExecuteTransfer(ctx context.Context, params *ExecuteTransferParams, body ExecuteTransferJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
-
-	// PrepareTransferWithBody request with any body
-	PrepareTransferWithBody(ctx context.Context, params *PrepareTransferParams, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
-
-	PrepareTransfer(ctx context.Context, params *PrepareTransferParams, body PrepareTransferJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
+	ExecuteTransfer(ctx context.Context, id openapi_types.UUID, body ExecuteTransferJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
 }
 
-func (c *Client) GetAssets(ctx context.Context, params *GetAssetsParams, reqEditors ...RequestEditorFn) (*http.Response, error) {
-	req, err := NewGetAssetsRequest(c.Server, params)
+func (c *Client) ListAssets(ctx context.Context, params *ListAssetsParams, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewListAssetsRequest(c.Server, params)
 	if err != nil {
 		return nil, err
 	}
@@ -547,8 +1027,8 @@ func (c *Client) GetAssets(ctx context.Context, params *GetAssetsParams, reqEdit
 	return c.Client.Do(req)
 }
 
-func (c *Client) GetBalances(ctx context.Context, params *GetBalancesParams, reqEditors ...RequestEditorFn) (*http.Response, error) {
-	req, err := NewGetBalancesRequest(c.Server, params)
+func (c *Client) GetBalances(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewGetBalancesRequest(c.Server)
 	if err != nil {
 		return nil, err
 	}
@@ -559,8 +1039,8 @@ func (c *Client) GetBalances(ctx context.Context, params *GetBalancesParams, req
 	return c.Client.Do(req)
 }
 
-func (c *Client) CreateWalletWithBody(ctx context.Context, params *CreateWalletParams, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
-	req, err := NewCreateWalletRequestWithBody(c.Server, params, contentType, body)
+func (c *Client) ListBalances(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewListBalancesRequest(c.Server)
 	if err != nil {
 		return nil, err
 	}
@@ -571,8 +1051,8 @@ func (c *Client) CreateWalletWithBody(ctx context.Context, params *CreateWalletP
 	return c.Client.Do(req)
 }
 
-func (c *Client) CreateWallet(ctx context.Context, params *CreateWalletParams, body CreateWalletJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
-	req, err := NewCreateWalletRequest(c.Server, params, body)
+func (c *Client) ListOrders(ctx context.Context, params *ListOrdersParams, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewListOrdersRequest(c.Server, params)
 	if err != nil {
 		return nil, err
 	}
@@ -583,8 +1063,8 @@ func (c *Client) CreateWallet(ctx context.Context, params *CreateWalletParams, b
 	return c.Client.Do(req)
 }
 
-func (c *Client) CreateOnrampWithBody(ctx context.Context, params *CreateOnrampParams, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
-	req, err := NewCreateOnrampRequestWithBody(c.Server, params, contentType, body)
+func (c *Client) CreateOrderWithBody(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewCreateOrderRequestWithBody(c.Server, contentType, body)
 	if err != nil {
 		return nil, err
 	}
@@ -595,8 +1075,8 @@ func (c *Client) CreateOnrampWithBody(ctx context.Context, params *CreateOnrampP
 	return c.Client.Do(req)
 }
 
-func (c *Client) CreateOnramp(ctx context.Context, params *CreateOnrampParams, body CreateOnrampJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
-	req, err := NewCreateOnrampRequest(c.Server, params, body)
+func (c *Client) CreateOrder(ctx context.Context, body CreateOrderJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewCreateOrderRequest(c.Server, body)
 	if err != nil {
 		return nil, err
 	}
@@ -607,8 +1087,8 @@ func (c *Client) CreateOnramp(ctx context.Context, params *CreateOnrampParams, b
 	return c.Client.Do(req)
 }
 
-func (c *Client) GetProfile(ctx context.Context, params *GetProfileParams, reqEditors ...RequestEditorFn) (*http.Response, error) {
-	req, err := NewGetProfileRequest(c.Server, params)
+func (c *Client) CancelOrder(ctx context.Context, id string, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewCancelOrderRequest(c.Server, id)
 	if err != nil {
 		return nil, err
 	}
@@ -619,8 +1099,8 @@ func (c *Client) GetProfile(ctx context.Context, params *GetProfileParams, reqEd
 	return c.Client.Do(req)
 }
 
-func (c *Client) CreateQuoteWithBody(ctx context.Context, params *CreateQuoteParams, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
-	req, err := NewCreateQuoteRequestWithBody(c.Server, params, contentType, body)
+func (c *Client) GetOrder(ctx context.Context, id string, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewGetOrderRequest(c.Server, id)
 	if err != nil {
 		return nil, err
 	}
@@ -631,8 +1111,8 @@ func (c *Client) CreateQuoteWithBody(ctx context.Context, params *CreateQuotePar
 	return c.Client.Do(req)
 }
 
-func (c *Client) CreateQuote(ctx context.Context, params *CreateQuoteParams, body CreateQuoteJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
-	req, err := NewCreateQuoteRequest(c.Server, params, body)
+func (c *Client) ModifyOrderWithBody(ctx context.Context, id string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewModifyOrderRequestWithBody(c.Server, id, contentType, body)
 	if err != nil {
 		return nil, err
 	}
@@ -643,8 +1123,8 @@ func (c *Client) CreateQuote(ctx context.Context, params *CreateQuoteParams, bod
 	return c.Client.Do(req)
 }
 
-func (c *Client) ExecuteTradeWithBody(ctx context.Context, params *ExecuteTradeParams, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
-	req, err := NewExecuteTradeRequestWithBody(c.Server, params, contentType, body)
+func (c *Client) ModifyOrder(ctx context.Context, id string, body ModifyOrderJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewModifyOrderRequest(c.Server, id, body)
 	if err != nil {
 		return nil, err
 	}
@@ -655,8 +1135,8 @@ func (c *Client) ExecuteTradeWithBody(ctx context.Context, params *ExecuteTradeP
 	return c.Client.Do(req)
 }
 
-func (c *Client) ExecuteTrade(ctx context.Context, params *ExecuteTradeParams, body ExecuteTradeJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
-	req, err := NewExecuteTradeRequest(c.Server, params, body)
+func (c *Client) PrepareCancelOrder(ctx context.Context, id string, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewPrepareCancelOrderRequest(c.Server, id)
 	if err != nil {
 		return nil, err
 	}
@@ -667,8 +1147,8 @@ func (c *Client) ExecuteTrade(ctx context.Context, params *ExecuteTradeParams, b
 	return c.Client.Do(req)
 }
 
-func (c *Client) ExecuteTransferWithBody(ctx context.Context, params *ExecuteTransferParams, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
-	req, err := NewExecuteTransferRequestWithBody(c.Server, params, contentType, body)
+func (c *Client) ExecuteCancelOrderWithBody(ctx context.Context, id string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewExecuteCancelOrderRequestWithBody(c.Server, id, contentType, body)
 	if err != nil {
 		return nil, err
 	}
@@ -679,8 +1159,8 @@ func (c *Client) ExecuteTransferWithBody(ctx context.Context, params *ExecuteTra
 	return c.Client.Do(req)
 }
 
-func (c *Client) ExecuteTransfer(ctx context.Context, params *ExecuteTransferParams, body ExecuteTransferJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
-	req, err := NewExecuteTransferRequest(c.Server, params, body)
+func (c *Client) ExecuteCancelOrder(ctx context.Context, id string, body ExecuteCancelOrderJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewExecuteCancelOrderRequest(c.Server, id, body)
 	if err != nil {
 		return nil, err
 	}
@@ -691,8 +1171,8 @@ func (c *Client) ExecuteTransfer(ctx context.Context, params *ExecuteTransferPar
 	return c.Client.Do(req)
 }
 
-func (c *Client) PrepareTransferWithBody(ctx context.Context, params *PrepareTransferParams, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
-	req, err := NewPrepareTransferRequestWithBody(c.Server, params, contentType, body)
+func (c *Client) ExecuteOrderWithBody(ctx context.Context, id string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewExecuteOrderRequestWithBody(c.Server, id, contentType, body)
 	if err != nil {
 		return nil, err
 	}
@@ -703,8 +1183,8 @@ func (c *Client) PrepareTransferWithBody(ctx context.Context, params *PrepareTra
 	return c.Client.Do(req)
 }
 
-func (c *Client) PrepareTransfer(ctx context.Context, params *PrepareTransferParams, body PrepareTransferJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
-	req, err := NewPrepareTransferRequest(c.Server, params, body)
+func (c *Client) ExecuteOrder(ctx context.Context, id string, body ExecuteOrderJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewExecuteOrderRequest(c.Server, id, body)
 	if err != nil {
 		return nil, err
 	}
@@ -715,8 +1195,116 @@ func (c *Client) PrepareTransfer(ctx context.Context, params *PrepareTransferPar
 	return c.Client.Do(req)
 }
 
-// NewGetAssetsRequest generates requests for GetAssets
-func NewGetAssetsRequest(server string, params *GetAssetsParams) (*http.Request, error) {
+func (c *Client) GetOrderStatus(ctx context.Context, id string, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewGetOrderStatusRequest(c.Server, id)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) ComputeQuoteWithBody(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewComputeQuoteRequestWithBody(c.Server, contentType, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) ComputeQuote(ctx context.Context, body ComputeQuoteJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewComputeQuoteRequest(c.Server, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) ListTransfers(ctx context.Context, params *ListTransfersParams, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewListTransfersRequest(c.Server, params)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) CreateTransferWithBody(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewCreateTransferRequestWithBody(c.Server, contentType, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) CreateTransfer(ctx context.Context, body CreateTransferJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewCreateTransferRequest(c.Server, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) GetTransfer(ctx context.Context, id openapi_types.UUID, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewGetTransferRequest(c.Server, id)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) ExecuteTransferWithBody(ctx context.Context, id openapi_types.UUID, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewExecuteTransferRequestWithBody(c.Server, id, contentType, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) ExecuteTransfer(ctx context.Context, id openapi_types.UUID, body ExecuteTransferJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewExecuteTransferRequest(c.Server, id, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+// NewListAssetsRequest generates requests for ListAssets
+func NewListAssetsRequest(server string, params *ListAssetsParams) (*http.Request, error) {
 	var err error
 
 	serverURL, err := url.Parse(server)
@@ -724,7 +1312,7 @@ func NewGetAssetsRequest(server string, params *GetAssetsParams) (*http.Request,
 		return nil, err
 	}
 
-	operationPath := fmt.Sprintf("/v1/defi/core/assets")
+	operationPath := fmt.Sprintf("/assets")
 	if operationPath[0] == '/' {
 		operationPath = "." + operationPath
 	}
@@ -737,25 +1325,9 @@ func NewGetAssetsRequest(server string, params *GetAssetsParams) (*http.Request,
 	if params != nil {
 		queryValues := queryURL.Query()
 
-		if params.Version != nil {
+		if params.Venue != nil {
 
-			if queryFrag, err := runtime.StyleParamWithOptions("form", true, "version", *params.Version, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationQuery, Type: "string", Format: ""}); err != nil {
-				return nil, err
-			} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
-				return nil, err
-			} else {
-				for k, v := range parsed {
-					for _, v2 := range v {
-						queryValues.Add(k, v2)
-					}
-				}
-			}
-
-		}
-
-		if params.Evm != nil {
-
-			if queryFrag, err := runtime.StyleParamWithOptions("form", true, "evm", *params.Evm, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationQuery, Type: "boolean", Format: ""}); err != nil {
+			if queryFrag, err := runtime.StyleParamWithOptions("form", true, "venue", *params.Venue, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationQuery, Type: "string", Format: ""}); err != nil {
 				return nil, err
 			} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
 				return nil, err
@@ -781,7 +1353,7 @@ func NewGetAssetsRequest(server string, params *GetAssetsParams) (*http.Request,
 }
 
 // NewGetBalancesRequest generates requests for GetBalances
-func NewGetBalancesRequest(server string, params *GetBalancesParams) (*http.Request, error) {
+func NewGetBalancesRequest(server string) (*http.Request, error) {
 	var err error
 
 	serverURL, err := url.Parse(server)
@@ -789,7 +1361,61 @@ func NewGetBalancesRequest(server string, params *GetBalancesParams) (*http.Requ
 		return nil, err
 	}
 
-	operationPath := fmt.Sprintf("/v1/defi/core/balances")
+	operationPath := fmt.Sprintf("/balances")
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest("GET", queryURL.String(), nil)
+	if err != nil {
+		return nil, err
+	}
+
+	return req, nil
+}
+
+// NewListBalancesRequest generates requests for ListBalances
+func NewListBalancesRequest(server string) (*http.Request, error) {
+	var err error
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/balances/unified")
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest("GET", queryURL.String(), nil)
+	if err != nil {
+		return nil, err
+	}
+
+	return req, nil
+}
+
+// NewListOrdersRequest generates requests for ListOrders
+func NewListOrdersRequest(server string, params *ListOrdersParams) (*http.Request, error) {
+	var err error
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/orders")
 	if operationPath[0] == '/' {
 		operationPath = "." + operationPath
 	}
@@ -802,9 +1428,9 @@ func NewGetBalancesRequest(server string, params *GetBalancesParams) (*http.Requ
 	if params != nil {
 		queryValues := queryURL.Query()
 
-		if params.Version != nil {
+		if params.Limit != nil {
 
-			if queryFrag, err := runtime.StyleParamWithOptions("form", true, "version", *params.Version, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationQuery, Type: "string", Format: ""}); err != nil {
+			if queryFrag, err := runtime.StyleParamWithOptions("form", true, "limit", *params.Limit, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationQuery, Type: "integer", Format: ""}); err != nil {
 				return nil, err
 			} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
 				return nil, err
@@ -818,9 +1444,41 @@ func NewGetBalancesRequest(server string, params *GetBalancesParams) (*http.Requ
 
 		}
 
-		if params.Evm != nil {
+		if params.Cursor != nil {
 
-			if queryFrag, err := runtime.StyleParamWithOptions("form", true, "evm", *params.Evm, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationQuery, Type: "boolean", Format: ""}); err != nil {
+			if queryFrag, err := runtime.StyleParamWithOptions("form", true, "cursor", *params.Cursor, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationQuery, Type: "string", Format: "date-time"}); err != nil {
+				return nil, err
+			} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
+				return nil, err
+			} else {
+				for k, v := range parsed {
+					for _, v2 := range v {
+						queryValues.Add(k, v2)
+					}
+				}
+			}
+
+		}
+
+		if params.Status != nil {
+
+			if queryFrag, err := runtime.StyleParamWithOptions("form", true, "status", *params.Status, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationQuery, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
+				return nil, err
+			} else {
+				for k, v := range parsed {
+					for _, v2 := range v {
+						queryValues.Add(k, v2)
+					}
+				}
+			}
+
+		}
+
+		if params.Venue != nil {
+
+			if queryFrag, err := runtime.StyleParamWithOptions("form", true, "venue", *params.Venue, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationQuery, Type: "string", Format: ""}); err != nil {
 				return nil, err
 			} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
 				return nil, err
@@ -845,19 +1503,19 @@ func NewGetBalancesRequest(server string, params *GetBalancesParams) (*http.Requ
 	return req, nil
 }
 
-// NewCreateWalletRequest calls the generic CreateWallet builder with application/json body
-func NewCreateWalletRequest(server string, params *CreateWalletParams, body CreateWalletJSONRequestBody) (*http.Request, error) {
+// NewCreateOrderRequest calls the generic CreateOrder builder with application/json body
+func NewCreateOrderRequest(server string, body CreateOrderJSONRequestBody) (*http.Request, error) {
 	var bodyReader io.Reader
 	buf, err := json.Marshal(body)
 	if err != nil {
 		return nil, err
 	}
 	bodyReader = bytes.NewReader(buf)
-	return NewCreateWalletRequestWithBody(server, params, "application/json", bodyReader)
+	return NewCreateOrderRequestWithBody(server, "application/json", bodyReader)
 }
 
-// NewCreateWalletRequestWithBody generates requests for CreateWallet with any type of body
-func NewCreateWalletRequestWithBody(server string, params *CreateWalletParams, contentType string, body io.Reader) (*http.Request, error) {
+// NewCreateOrderRequestWithBody generates requests for CreateOrder with any type of body
+func NewCreateOrderRequestWithBody(server string, contentType string, body io.Reader) (*http.Request, error) {
 	var err error
 
 	serverURL, err := url.Parse(server)
@@ -865,7 +1523,353 @@ func NewCreateWalletRequestWithBody(server string, params *CreateWalletParams, c
 		return nil, err
 	}
 
-	operationPath := fmt.Sprintf("/v1/defi/core/create-wallet")
+	operationPath := fmt.Sprintf("/orders")
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest("POST", queryURL.String(), body)
+	if err != nil {
+		return nil, err
+	}
+
+	req.Header.Add("Content-Type", contentType)
+
+	return req, nil
+}
+
+// NewCancelOrderRequest generates requests for CancelOrder
+func NewCancelOrderRequest(server string, id string) (*http.Request, error) {
+	var err error
+
+	var pathParam0 string
+
+	pathParam0, err = runtime.StyleParamWithOptions("simple", false, "id", id, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationPath, Type: "string", Format: ""})
+	if err != nil {
+		return nil, err
+	}
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/orders/%s", pathParam0)
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest("DELETE", queryURL.String(), nil)
+	if err != nil {
+		return nil, err
+	}
+
+	return req, nil
+}
+
+// NewGetOrderRequest generates requests for GetOrder
+func NewGetOrderRequest(server string, id string) (*http.Request, error) {
+	var err error
+
+	var pathParam0 string
+
+	pathParam0, err = runtime.StyleParamWithOptions("simple", false, "id", id, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationPath, Type: "string", Format: ""})
+	if err != nil {
+		return nil, err
+	}
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/orders/%s", pathParam0)
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest("GET", queryURL.String(), nil)
+	if err != nil {
+		return nil, err
+	}
+
+	return req, nil
+}
+
+// NewModifyOrderRequest calls the generic ModifyOrder builder with application/json body
+func NewModifyOrderRequest(server string, id string, body ModifyOrderJSONRequestBody) (*http.Request, error) {
+	var bodyReader io.Reader
+	buf, err := json.Marshal(body)
+	if err != nil {
+		return nil, err
+	}
+	bodyReader = bytes.NewReader(buf)
+	return NewModifyOrderRequestWithBody(server, id, "application/json", bodyReader)
+}
+
+// NewModifyOrderRequestWithBody generates requests for ModifyOrder with any type of body
+func NewModifyOrderRequestWithBody(server string, id string, contentType string, body io.Reader) (*http.Request, error) {
+	var err error
+
+	var pathParam0 string
+
+	pathParam0, err = runtime.StyleParamWithOptions("simple", false, "id", id, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationPath, Type: "string", Format: ""})
+	if err != nil {
+		return nil, err
+	}
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/orders/%s", pathParam0)
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest("PATCH", queryURL.String(), body)
+	if err != nil {
+		return nil, err
+	}
+
+	req.Header.Add("Content-Type", contentType)
+
+	return req, nil
+}
+
+// NewPrepareCancelOrderRequest generates requests for PrepareCancelOrder
+func NewPrepareCancelOrderRequest(server string, id string) (*http.Request, error) {
+	var err error
+
+	var pathParam0 string
+
+	pathParam0, err = runtime.StyleParamWithOptions("simple", false, "id", id, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationPath, Type: "string", Format: ""})
+	if err != nil {
+		return nil, err
+	}
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/orders/%s/cancel", pathParam0)
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest("POST", queryURL.String(), nil)
+	if err != nil {
+		return nil, err
+	}
+
+	return req, nil
+}
+
+// NewExecuteCancelOrderRequest calls the generic ExecuteCancelOrder builder with application/json body
+func NewExecuteCancelOrderRequest(server string, id string, body ExecuteCancelOrderJSONRequestBody) (*http.Request, error) {
+	var bodyReader io.Reader
+	buf, err := json.Marshal(body)
+	if err != nil {
+		return nil, err
+	}
+	bodyReader = bytes.NewReader(buf)
+	return NewExecuteCancelOrderRequestWithBody(server, id, "application/json", bodyReader)
+}
+
+// NewExecuteCancelOrderRequestWithBody generates requests for ExecuteCancelOrder with any type of body
+func NewExecuteCancelOrderRequestWithBody(server string, id string, contentType string, body io.Reader) (*http.Request, error) {
+	var err error
+
+	var pathParam0 string
+
+	pathParam0, err = runtime.StyleParamWithOptions("simple", false, "id", id, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationPath, Type: "string", Format: ""})
+	if err != nil {
+		return nil, err
+	}
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/orders/%s/cancel/execute", pathParam0)
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest("POST", queryURL.String(), body)
+	if err != nil {
+		return nil, err
+	}
+
+	req.Header.Add("Content-Type", contentType)
+
+	return req, nil
+}
+
+// NewExecuteOrderRequest calls the generic ExecuteOrder builder with application/json body
+func NewExecuteOrderRequest(server string, id string, body ExecuteOrderJSONRequestBody) (*http.Request, error) {
+	var bodyReader io.Reader
+	buf, err := json.Marshal(body)
+	if err != nil {
+		return nil, err
+	}
+	bodyReader = bytes.NewReader(buf)
+	return NewExecuteOrderRequestWithBody(server, id, "application/json", bodyReader)
+}
+
+// NewExecuteOrderRequestWithBody generates requests for ExecuteOrder with any type of body
+func NewExecuteOrderRequestWithBody(server string, id string, contentType string, body io.Reader) (*http.Request, error) {
+	var err error
+
+	var pathParam0 string
+
+	pathParam0, err = runtime.StyleParamWithOptions("simple", false, "id", id, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationPath, Type: "string", Format: ""})
+	if err != nil {
+		return nil, err
+	}
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/orders/%s/execute", pathParam0)
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest("POST", queryURL.String(), body)
+	if err != nil {
+		return nil, err
+	}
+
+	req.Header.Add("Content-Type", contentType)
+
+	return req, nil
+}
+
+// NewGetOrderStatusRequest generates requests for GetOrderStatus
+func NewGetOrderStatusRequest(server string, id string) (*http.Request, error) {
+	var err error
+
+	var pathParam0 string
+
+	pathParam0, err = runtime.StyleParamWithOptions("simple", false, "id", id, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationPath, Type: "string", Format: ""})
+	if err != nil {
+		return nil, err
+	}
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/orders/%s/status", pathParam0)
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest("GET", queryURL.String(), nil)
+	if err != nil {
+		return nil, err
+	}
+
+	return req, nil
+}
+
+// NewComputeQuoteRequest calls the generic ComputeQuote builder with application/json body
+func NewComputeQuoteRequest(server string, body ComputeQuoteJSONRequestBody) (*http.Request, error) {
+	var bodyReader io.Reader
+	buf, err := json.Marshal(body)
+	if err != nil {
+		return nil, err
+	}
+	bodyReader = bytes.NewReader(buf)
+	return NewComputeQuoteRequestWithBody(server, "application/json", bodyReader)
+}
+
+// NewComputeQuoteRequestWithBody generates requests for ComputeQuote with any type of body
+func NewComputeQuoteRequestWithBody(server string, contentType string, body io.Reader) (*http.Request, error) {
+	var err error
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/quotes")
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest("POST", queryURL.String(), body)
+	if err != nil {
+		return nil, err
+	}
+
+	req.Header.Add("Content-Type", contentType)
+
+	return req, nil
+}
+
+// NewListTransfersRequest generates requests for ListTransfers
+func NewListTransfersRequest(server string, params *ListTransfersParams) (*http.Request, error) {
+	var err error
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/transfers")
 	if operationPath[0] == '/' {
 		operationPath = "." + operationPath
 	}
@@ -878,9 +1882,9 @@ func NewCreateWalletRequestWithBody(server string, params *CreateWalletParams, c
 	if params != nil {
 		queryValues := queryURL.Query()
 
-		if params.Version != nil {
+		if params.Status != nil {
 
-			if queryFrag, err := runtime.StyleParamWithOptions("form", true, "version", *params.Version, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationQuery, Type: "string", Format: ""}); err != nil {
+			if queryFrag, err := runtime.StyleParamWithOptions("form", true, "status", *params.Status, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationQuery, Type: "string", Format: ""}); err != nil {
 				return nil, err
 			} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
 				return nil, err
@@ -894,55 +1898,9 @@ func NewCreateWalletRequestWithBody(server string, params *CreateWalletParams, c
 
 		}
 
-		queryURL.RawQuery = queryValues.Encode()
-	}
+		if params.Cursor != nil {
 
-	req, err := http.NewRequest("POST", queryURL.String(), body)
-	if err != nil {
-		return nil, err
-	}
-
-	req.Header.Add("Content-Type", contentType)
-
-	return req, nil
-}
-
-// NewCreateOnrampRequest calls the generic CreateOnramp builder with application/json body
-func NewCreateOnrampRequest(server string, params *CreateOnrampParams, body CreateOnrampJSONRequestBody) (*http.Request, error) {
-	var bodyReader io.Reader
-	buf, err := json.Marshal(body)
-	if err != nil {
-		return nil, err
-	}
-	bodyReader = bytes.NewReader(buf)
-	return NewCreateOnrampRequestWithBody(server, params, "application/json", bodyReader)
-}
-
-// NewCreateOnrampRequestWithBody generates requests for CreateOnramp with any type of body
-func NewCreateOnrampRequestWithBody(server string, params *CreateOnrampParams, contentType string, body io.Reader) (*http.Request, error) {
-	var err error
-
-	serverURL, err := url.Parse(server)
-	if err != nil {
-		return nil, err
-	}
-
-	operationPath := fmt.Sprintf("/v1/defi/core/onramp")
-	if operationPath[0] == '/' {
-		operationPath = "." + operationPath
-	}
-
-	queryURL, err := serverURL.Parse(operationPath)
-	if err != nil {
-		return nil, err
-	}
-
-	if params != nil {
-		queryValues := queryURL.Query()
-
-		if params.Version != nil {
-
-			if queryFrag, err := runtime.StyleParamWithOptions("form", true, "version", *params.Version, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationQuery, Type: "string", Format: ""}); err != nil {
+			if queryFrag, err := runtime.StyleParamWithOptions("form", true, "cursor", *params.Cursor, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationQuery, Type: "string", Format: ""}); err != nil {
 				return nil, err
 			} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
 				return nil, err
@@ -956,44 +1914,9 @@ func NewCreateOnrampRequestWithBody(server string, params *CreateOnrampParams, c
 
 		}
 
-		queryURL.RawQuery = queryValues.Encode()
-	}
+		if params.Limit != nil {
 
-	req, err := http.NewRequest("POST", queryURL.String(), body)
-	if err != nil {
-		return nil, err
-	}
-
-	req.Header.Add("Content-Type", contentType)
-
-	return req, nil
-}
-
-// NewGetProfileRequest generates requests for GetProfile
-func NewGetProfileRequest(server string, params *GetProfileParams) (*http.Request, error) {
-	var err error
-
-	serverURL, err := url.Parse(server)
-	if err != nil {
-		return nil, err
-	}
-
-	operationPath := fmt.Sprintf("/v1/defi/core/profile/me")
-	if operationPath[0] == '/' {
-		operationPath = "." + operationPath
-	}
-
-	queryURL, err := serverURL.Parse(operationPath)
-	if err != nil {
-		return nil, err
-	}
-
-	if params != nil {
-		queryValues := queryURL.Query()
-
-		if params.Version != nil {
-
-			if queryFrag, err := runtime.StyleParamWithOptions("form", true, "version", *params.Version, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationQuery, Type: "string", Format: ""}); err != nil {
+			if queryFrag, err := runtime.StyleParamWithOptions("form", true, "limit", *params.Limit, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationQuery, Type: "integer", Format: ""}); err != nil {
 				return nil, err
 			} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
 				return nil, err
@@ -1018,19 +1941,19 @@ func NewGetProfileRequest(server string, params *GetProfileParams) (*http.Reques
 	return req, nil
 }
 
-// NewCreateQuoteRequest calls the generic CreateQuote builder with application/json body
-func NewCreateQuoteRequest(server string, params *CreateQuoteParams, body CreateQuoteJSONRequestBody) (*http.Request, error) {
+// NewCreateTransferRequest calls the generic CreateTransfer builder with application/json body
+func NewCreateTransferRequest(server string, body CreateTransferJSONRequestBody) (*http.Request, error) {
 	var bodyReader io.Reader
 	buf, err := json.Marshal(body)
 	if err != nil {
 		return nil, err
 	}
 	bodyReader = bytes.NewReader(buf)
-	return NewCreateQuoteRequestWithBody(server, params, "application/json", bodyReader)
+	return NewCreateTransferRequestWithBody(server, "application/json", bodyReader)
 }
 
-// NewCreateQuoteRequestWithBody generates requests for CreateQuote with any type of body
-func NewCreateQuoteRequestWithBody(server string, params *CreateQuoteParams, contentType string, body io.Reader) (*http.Request, error) {
+// NewCreateTransferRequestWithBody generates requests for CreateTransfer with any type of body
+func NewCreateTransferRequestWithBody(server string, contentType string, body io.Reader) (*http.Request, error) {
 	var err error
 
 	serverURL, err := url.Parse(server)
@@ -1038,7 +1961,7 @@ func NewCreateQuoteRequestWithBody(server string, params *CreateQuoteParams, con
 		return nil, err
 	}
 
-	operationPath := fmt.Sprintf("/v1/defi/core/quote")
+	operationPath := fmt.Sprintf("/transfers")
 	if operationPath[0] == '/' {
 		operationPath = "." + operationPath
 	}
@@ -1046,28 +1969,6 @@ func NewCreateQuoteRequestWithBody(server string, params *CreateQuoteParams, con
 	queryURL, err := serverURL.Parse(operationPath)
 	if err != nil {
 		return nil, err
-	}
-
-	if params != nil {
-		queryValues := queryURL.Query()
-
-		if params.Version != nil {
-
-			if queryFrag, err := runtime.StyleParamWithOptions("form", true, "version", *params.Version, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationQuery, Type: "string", Format: ""}); err != nil {
-				return nil, err
-			} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
-				return nil, err
-			} else {
-				for k, v := range parsed {
-					for _, v2 := range v {
-						queryValues.Add(k, v2)
-					}
-				}
-			}
-
-		}
-
-		queryURL.RawQuery = queryValues.Encode()
 	}
 
 	req, err := http.NewRequest("POST", queryURL.String(), body)
@@ -1080,27 +1981,23 @@ func NewCreateQuoteRequestWithBody(server string, params *CreateQuoteParams, con
 	return req, nil
 }
 
-// NewExecuteTradeRequest calls the generic ExecuteTrade builder with application/json body
-func NewExecuteTradeRequest(server string, params *ExecuteTradeParams, body ExecuteTradeJSONRequestBody) (*http.Request, error) {
-	var bodyReader io.Reader
-	buf, err := json.Marshal(body)
+// NewGetTransferRequest generates requests for GetTransfer
+func NewGetTransferRequest(server string, id openapi_types.UUID) (*http.Request, error) {
+	var err error
+
+	var pathParam0 string
+
+	pathParam0, err = runtime.StyleParamWithOptions("simple", false, "id", id, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationPath, Type: "string", Format: "uuid"})
 	if err != nil {
 		return nil, err
 	}
-	bodyReader = bytes.NewReader(buf)
-	return NewExecuteTradeRequestWithBody(server, params, "application/json", bodyReader)
-}
-
-// NewExecuteTradeRequestWithBody generates requests for ExecuteTrade with any type of body
-func NewExecuteTradeRequestWithBody(server string, params *ExecuteTradeParams, contentType string, body io.Reader) (*http.Request, error) {
-	var err error
 
 	serverURL, err := url.Parse(server)
 	if err != nil {
 		return nil, err
 	}
 
-	operationPath := fmt.Sprintf("/v1/defi/core/trade")
+	operationPath := fmt.Sprintf("/transfers/%s", pathParam0)
 	if operationPath[0] == '/' {
 		operationPath = "." + operationPath
 	}
@@ -1110,59 +2007,42 @@ func NewExecuteTradeRequestWithBody(server string, params *ExecuteTradeParams, c
 		return nil, err
 	}
 
-	if params != nil {
-		queryValues := queryURL.Query()
-
-		if params.Version != nil {
-
-			if queryFrag, err := runtime.StyleParamWithOptions("form", true, "version", *params.Version, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationQuery, Type: "string", Format: ""}); err != nil {
-				return nil, err
-			} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
-				return nil, err
-			} else {
-				for k, v := range parsed {
-					for _, v2 := range v {
-						queryValues.Add(k, v2)
-					}
-				}
-			}
-
-		}
-
-		queryURL.RawQuery = queryValues.Encode()
-	}
-
-	req, err := http.NewRequest("POST", queryURL.String(), body)
+	req, err := http.NewRequest("GET", queryURL.String(), nil)
 	if err != nil {
 		return nil, err
 	}
-
-	req.Header.Add("Content-Type", contentType)
 
 	return req, nil
 }
 
 // NewExecuteTransferRequest calls the generic ExecuteTransfer builder with application/json body
-func NewExecuteTransferRequest(server string, params *ExecuteTransferParams, body ExecuteTransferJSONRequestBody) (*http.Request, error) {
+func NewExecuteTransferRequest(server string, id openapi_types.UUID, body ExecuteTransferJSONRequestBody) (*http.Request, error) {
 	var bodyReader io.Reader
 	buf, err := json.Marshal(body)
 	if err != nil {
 		return nil, err
 	}
 	bodyReader = bytes.NewReader(buf)
-	return NewExecuteTransferRequestWithBody(server, params, "application/json", bodyReader)
+	return NewExecuteTransferRequestWithBody(server, id, "application/json", bodyReader)
 }
 
 // NewExecuteTransferRequestWithBody generates requests for ExecuteTransfer with any type of body
-func NewExecuteTransferRequestWithBody(server string, params *ExecuteTransferParams, contentType string, body io.Reader) (*http.Request, error) {
+func NewExecuteTransferRequestWithBody(server string, id openapi_types.UUID, contentType string, body io.Reader) (*http.Request, error) {
 	var err error
+
+	var pathParam0 string
+
+	pathParam0, err = runtime.StyleParamWithOptions("simple", false, "id", id, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationPath, Type: "string", Format: "uuid"})
+	if err != nil {
+		return nil, err
+	}
 
 	serverURL, err := url.Parse(server)
 	if err != nil {
 		return nil, err
 	}
 
-	operationPath := fmt.Sprintf("/v1/defi/core/transfer/execute")
+	operationPath := fmt.Sprintf("/transfers/%s/execute", pathParam0)
 	if operationPath[0] == '/' {
 		operationPath = "." + operationPath
 	}
@@ -1170,90 +2050,6 @@ func NewExecuteTransferRequestWithBody(server string, params *ExecuteTransferPar
 	queryURL, err := serverURL.Parse(operationPath)
 	if err != nil {
 		return nil, err
-	}
-
-	if params != nil {
-		queryValues := queryURL.Query()
-
-		if params.Version != nil {
-
-			if queryFrag, err := runtime.StyleParamWithOptions("form", true, "version", *params.Version, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationQuery, Type: "string", Format: ""}); err != nil {
-				return nil, err
-			} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
-				return nil, err
-			} else {
-				for k, v := range parsed {
-					for _, v2 := range v {
-						queryValues.Add(k, v2)
-					}
-				}
-			}
-
-		}
-
-		queryURL.RawQuery = queryValues.Encode()
-	}
-
-	req, err := http.NewRequest("POST", queryURL.String(), body)
-	if err != nil {
-		return nil, err
-	}
-
-	req.Header.Add("Content-Type", contentType)
-
-	return req, nil
-}
-
-// NewPrepareTransferRequest calls the generic PrepareTransfer builder with application/json body
-func NewPrepareTransferRequest(server string, params *PrepareTransferParams, body PrepareTransferJSONRequestBody) (*http.Request, error) {
-	var bodyReader io.Reader
-	buf, err := json.Marshal(body)
-	if err != nil {
-		return nil, err
-	}
-	bodyReader = bytes.NewReader(buf)
-	return NewPrepareTransferRequestWithBody(server, params, "application/json", bodyReader)
-}
-
-// NewPrepareTransferRequestWithBody generates requests for PrepareTransfer with any type of body
-func NewPrepareTransferRequestWithBody(server string, params *PrepareTransferParams, contentType string, body io.Reader) (*http.Request, error) {
-	var err error
-
-	serverURL, err := url.Parse(server)
-	if err != nil {
-		return nil, err
-	}
-
-	operationPath := fmt.Sprintf("/v1/defi/core/transfer/prepare")
-	if operationPath[0] == '/' {
-		operationPath = "." + operationPath
-	}
-
-	queryURL, err := serverURL.Parse(operationPath)
-	if err != nil {
-		return nil, err
-	}
-
-	if params != nil {
-		queryValues := queryURL.Query()
-
-		if params.Version != nil {
-
-			if queryFrag, err := runtime.StyleParamWithOptions("form", true, "version", *params.Version, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationQuery, Type: "string", Format: ""}); err != nil {
-				return nil, err
-			} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
-				return nil, err
-			} else {
-				for k, v := range parsed {
-					for _, v2 := range v {
-						queryValues.Add(k, v2)
-					}
-				}
-			}
-
-		}
-
-		queryURL.RawQuery = queryValues.Encode()
 	}
 
 	req, err := http.NewRequest("POST", queryURL.String(), body)
@@ -1309,57 +2105,82 @@ func WithBaseURL(baseURL string) ClientOption {
 
 // ClientWithResponsesInterface is the interface specification for the client with responses above.
 type ClientWithResponsesInterface interface {
-	// GetAssetsWithResponse request
-	GetAssetsWithResponse(ctx context.Context, params *GetAssetsParams, reqEditors ...RequestEditorFn) (*GetAssetsResponse, error)
+	// ListAssetsWithResponse request
+	ListAssetsWithResponse(ctx context.Context, params *ListAssetsParams, reqEditors ...RequestEditorFn) (*ListAssetsResponse, error)
 
 	// GetBalancesWithResponse request
-	GetBalancesWithResponse(ctx context.Context, params *GetBalancesParams, reqEditors ...RequestEditorFn) (*GetBalancesResponse, error)
+	GetBalancesWithResponse(ctx context.Context, reqEditors ...RequestEditorFn) (*GetBalancesResponse, error)
 
-	// CreateWalletWithBodyWithResponse request with any body
-	CreateWalletWithBodyWithResponse(ctx context.Context, params *CreateWalletParams, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*CreateWalletResponse, error)
+	// ListBalancesWithResponse request
+	ListBalancesWithResponse(ctx context.Context, reqEditors ...RequestEditorFn) (*ListBalancesResponse, error)
 
-	CreateWalletWithResponse(ctx context.Context, params *CreateWalletParams, body CreateWalletJSONRequestBody, reqEditors ...RequestEditorFn) (*CreateWalletResponse, error)
+	// ListOrdersWithResponse request
+	ListOrdersWithResponse(ctx context.Context, params *ListOrdersParams, reqEditors ...RequestEditorFn) (*ListOrdersResponse, error)
 
-	// CreateOnrampWithBodyWithResponse request with any body
-	CreateOnrampWithBodyWithResponse(ctx context.Context, params *CreateOnrampParams, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*CreateOnrampResponse, error)
+	// CreateOrderWithBodyWithResponse request with any body
+	CreateOrderWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*CreateOrderResponse, error)
 
-	CreateOnrampWithResponse(ctx context.Context, params *CreateOnrampParams, body CreateOnrampJSONRequestBody, reqEditors ...RequestEditorFn) (*CreateOnrampResponse, error)
+	CreateOrderWithResponse(ctx context.Context, body CreateOrderJSONRequestBody, reqEditors ...RequestEditorFn) (*CreateOrderResponse, error)
 
-	// GetProfileWithResponse request
-	GetProfileWithResponse(ctx context.Context, params *GetProfileParams, reqEditors ...RequestEditorFn) (*GetProfileResponse, error)
+	// CancelOrderWithResponse request
+	CancelOrderWithResponse(ctx context.Context, id string, reqEditors ...RequestEditorFn) (*CancelOrderResponse, error)
 
-	// CreateQuoteWithBodyWithResponse request with any body
-	CreateQuoteWithBodyWithResponse(ctx context.Context, params *CreateQuoteParams, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*CreateQuoteResponse, error)
+	// GetOrderWithResponse request
+	GetOrderWithResponse(ctx context.Context, id string, reqEditors ...RequestEditorFn) (*GetOrderResponse, error)
 
-	CreateQuoteWithResponse(ctx context.Context, params *CreateQuoteParams, body CreateQuoteJSONRequestBody, reqEditors ...RequestEditorFn) (*CreateQuoteResponse, error)
+	// ModifyOrderWithBodyWithResponse request with any body
+	ModifyOrderWithBodyWithResponse(ctx context.Context, id string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*ModifyOrderResponse, error)
 
-	// ExecuteTradeWithBodyWithResponse request with any body
-	ExecuteTradeWithBodyWithResponse(ctx context.Context, params *ExecuteTradeParams, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*ExecuteTradeResponse, error)
+	ModifyOrderWithResponse(ctx context.Context, id string, body ModifyOrderJSONRequestBody, reqEditors ...RequestEditorFn) (*ModifyOrderResponse, error)
 
-	ExecuteTradeWithResponse(ctx context.Context, params *ExecuteTradeParams, body ExecuteTradeJSONRequestBody, reqEditors ...RequestEditorFn) (*ExecuteTradeResponse, error)
+	// PrepareCancelOrderWithResponse request
+	PrepareCancelOrderWithResponse(ctx context.Context, id string, reqEditors ...RequestEditorFn) (*PrepareCancelOrderResponse, error)
+
+	// ExecuteCancelOrderWithBodyWithResponse request with any body
+	ExecuteCancelOrderWithBodyWithResponse(ctx context.Context, id string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*ExecuteCancelOrderResponse, error)
+
+	ExecuteCancelOrderWithResponse(ctx context.Context, id string, body ExecuteCancelOrderJSONRequestBody, reqEditors ...RequestEditorFn) (*ExecuteCancelOrderResponse, error)
+
+	// ExecuteOrderWithBodyWithResponse request with any body
+	ExecuteOrderWithBodyWithResponse(ctx context.Context, id string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*ExecuteOrderResponse, error)
+
+	ExecuteOrderWithResponse(ctx context.Context, id string, body ExecuteOrderJSONRequestBody, reqEditors ...RequestEditorFn) (*ExecuteOrderResponse, error)
+
+	// GetOrderStatusWithResponse request
+	GetOrderStatusWithResponse(ctx context.Context, id string, reqEditors ...RequestEditorFn) (*GetOrderStatusResponse, error)
+
+	// ComputeQuoteWithBodyWithResponse request with any body
+	ComputeQuoteWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*ComputeQuoteResponse, error)
+
+	ComputeQuoteWithResponse(ctx context.Context, body ComputeQuoteJSONRequestBody, reqEditors ...RequestEditorFn) (*ComputeQuoteResponse, error)
+
+	// ListTransfersWithResponse request
+	ListTransfersWithResponse(ctx context.Context, params *ListTransfersParams, reqEditors ...RequestEditorFn) (*ListTransfersResponse, error)
+
+	// CreateTransferWithBodyWithResponse request with any body
+	CreateTransferWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*CreateTransferResponse, error)
+
+	CreateTransferWithResponse(ctx context.Context, body CreateTransferJSONRequestBody, reqEditors ...RequestEditorFn) (*CreateTransferResponse, error)
+
+	// GetTransferWithResponse request
+	GetTransferWithResponse(ctx context.Context, id openapi_types.UUID, reqEditors ...RequestEditorFn) (*GetTransferResponse, error)
 
 	// ExecuteTransferWithBodyWithResponse request with any body
-	ExecuteTransferWithBodyWithResponse(ctx context.Context, params *ExecuteTransferParams, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*ExecuteTransferResponse, error)
+	ExecuteTransferWithBodyWithResponse(ctx context.Context, id openapi_types.UUID, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*ExecuteTransferResponse, error)
 
-	ExecuteTransferWithResponse(ctx context.Context, params *ExecuteTransferParams, body ExecuteTransferJSONRequestBody, reqEditors ...RequestEditorFn) (*ExecuteTransferResponse, error)
-
-	// PrepareTransferWithBodyWithResponse request with any body
-	PrepareTransferWithBodyWithResponse(ctx context.Context, params *PrepareTransferParams, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*PrepareTransferResponse, error)
-
-	PrepareTransferWithResponse(ctx context.Context, params *PrepareTransferParams, body PrepareTransferJSONRequestBody, reqEditors ...RequestEditorFn) (*PrepareTransferResponse, error)
+	ExecuteTransferWithResponse(ctx context.Context, id openapi_types.UUID, body ExecuteTransferJSONRequestBody, reqEditors ...RequestEditorFn) (*ExecuteTransferResponse, error)
 }
 
-type GetAssetsResponse struct {
+type ListAssetsResponse struct {
 	Body         []byte
 	HTTPResponse *http.Response
-	JSON200      *[]Asset
-	JSON500      *struct {
-		Message *string `json:"message,omitempty"`
-	}
+	JSON200      *ListAssetsResponseBody
+	JSON400      *BadRequest
+	JSON500      *InternalError
 }
 
 // Status returns HTTPResponse.Status
-func (r GetAssetsResponse) Status() string {
+func (r ListAssetsResponse) Status() string {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.Status
 	}
@@ -1367,7 +2188,7 @@ func (r GetAssetsResponse) Status() string {
 }
 
 // StatusCode returns HTTPResponse.StatusCode
-func (r GetAssetsResponse) StatusCode() int {
+func (r ListAssetsResponse) StatusCode() int {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.StatusCode
 	}
@@ -1377,13 +2198,8 @@ func (r GetAssetsResponse) StatusCode() int {
 type GetBalancesResponse struct {
 	Body         []byte
 	HTTPResponse *http.Response
-	JSON200      *BalanceResponse
-	JSON401      *struct {
-		Message *string `json:"message,omitempty"`
-	}
-	JSON500 *struct {
-		Message *string `json:"message,omitempty"`
-	}
+	JSON200      *ListBalancesResponseBody
+	JSON401      *Unauthorized
 }
 
 // Status returns HTTPResponse.Status
@@ -1402,23 +2218,15 @@ func (r GetBalancesResponse) StatusCode() int {
 	return 0
 }
 
-type CreateWalletResponse struct {
+type ListBalancesResponse struct {
 	Body         []byte
 	HTTPResponse *http.Response
-	JSON201      *WalletCreationResult
-	JSON400      *struct {
-		Message *string `json:"message,omitempty"`
-	}
-	JSON401 *struct {
-		Message *string `json:"message,omitempty"`
-	}
-	JSON500 *struct {
-		Message *string `json:"message,omitempty"`
-	}
+	JSON200      *ListBalancesResponseBody
+	JSON401      *Unauthorized
 }
 
 // Status returns HTTPResponse.Status
-func (r CreateWalletResponse) Status() string {
+func (r ListBalancesResponse) Status() string {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.Status
 	}
@@ -1426,33 +2234,24 @@ func (r CreateWalletResponse) Status() string {
 }
 
 // StatusCode returns HTTPResponse.StatusCode
-func (r CreateWalletResponse) StatusCode() int {
+func (r ListBalancesResponse) StatusCode() int {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.StatusCode
 	}
 	return 0
 }
 
-type CreateOnrampResponse struct {
+type ListOrdersResponse struct {
 	Body         []byte
 	HTTPResponse *http.Response
-	JSON200      *OnrampResponse
-	JSON400      *struct {
-		Message *string `json:"message,omitempty"`
-	}
-	JSON401 *struct {
-		Message *string `json:"message,omitempty"`
-	}
-	JSON422 *struct {
-		Message *string `json:"message,omitempty"`
-	}
-	JSON500 *struct {
-		Message *string `json:"message,omitempty"`
-	}
+	JSON200      *GetOrdersResponse
+	JSON400      *BadRequest
+	JSON401      *Unauthorized
+	JSON500      *InternalError
 }
 
 // Status returns HTTPResponse.Status
-func (r CreateOnrampResponse) Status() string {
+func (r ListOrdersResponse) Status() string {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.Status
 	}
@@ -1460,30 +2259,27 @@ func (r CreateOnrampResponse) Status() string {
 }
 
 // StatusCode returns HTTPResponse.StatusCode
-func (r CreateOnrampResponse) StatusCode() int {
+func (r ListOrdersResponse) StatusCode() int {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.StatusCode
 	}
 	return 0
 }
 
-type GetProfileResponse struct {
+type CreateOrderResponse struct {
 	Body         []byte
 	HTTPResponse *http.Response
-	JSON200      *ProfileResponse
-	JSON400      *struct {
-		Message *string `json:"message,omitempty"`
-	}
-	JSON401 *struct {
-		Message *string `json:"message,omitempty"`
-	}
-	JSON500 *struct {
-		Message *string `json:"message,omitempty"`
-	}
+	JSON201      *CreateOrderResponseBody
+	JSON400      *BadRequest
+	JSON401      *Unauthorized
+	JSON403      *Forbidden
+	JSON404      *NotFound
+	JSON500      *InternalError
+	JSON503      *ServiceUnavailable
 }
 
 // Status returns HTTPResponse.Status
-func (r GetProfileResponse) Status() string {
+func (r CreateOrderResponse) Status() string {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.Status
 	}
@@ -1491,33 +2287,213 @@ func (r GetProfileResponse) Status() string {
 }
 
 // StatusCode returns HTTPResponse.StatusCode
-func (r GetProfileResponse) StatusCode() int {
+func (r CreateOrderResponse) StatusCode() int {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.StatusCode
 	}
 	return 0
 }
 
-type CreateQuoteResponse struct {
+type CancelOrderResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	JSON202      *map[string]interface{}
+	JSON400      *BadRequest
+	JSON401      *Unauthorized
+	JSON404      *NotFound
+	JSON500      *InternalError
+}
+
+// Status returns HTTPResponse.Status
+func (r CancelOrderResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r CancelOrderResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+type GetOrderResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	JSON200      *OrderDetail
+	JSON400      *BadRequest
+	JSON401      *Unauthorized
+	JSON404      *NotFound
+	JSON500      *InternalError
+}
+
+// Status returns HTTPResponse.Status
+func (r GetOrderResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r GetOrderResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+type ModifyOrderResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	JSON202      *map[string]interface{}
+	JSON400      *BadRequest
+	JSON401      *Unauthorized
+	JSON404      *NotFound
+	JSON500      *InternalError
+	JSON503      *ServiceUnavailable
+}
+
+// Status returns HTTPResponse.Status
+func (r ModifyOrderResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r ModifyOrderResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+type PrepareCancelOrderResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	JSON200      *CancelOrderResponseBody
+	JSON400      *BadRequest
+	JSON401      *Unauthorized
+	JSON404      *NotFound
+	JSON500      *InternalError
+	JSON503      *ServiceUnavailable
+}
+
+// Status returns HTTPResponse.Status
+func (r PrepareCancelOrderResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r PrepareCancelOrderResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+type ExecuteCancelOrderResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	JSON200      *ExecuteOrderResponseBody
+	JSON400      *BadRequest
+	JSON401      *Unauthorized
+	JSON404      *NotFound
+	JSON409      *Conflict
+	JSON500      *InternalError
+	JSON503      *ServiceUnavailable
+}
+
+// Status returns HTTPResponse.Status
+func (r ExecuteCancelOrderResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r ExecuteCancelOrderResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+type ExecuteOrderResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	JSON200      *ExecuteOrderResponseBody
+	JSON400      *BadRequest
+	JSON401      *Unauthorized
+	JSON403      *Forbidden
+	JSON404      *NotFound
+	JSON409      *Conflict
+	JSON500      *InternalError
+	JSON503      *ServiceUnavailable
+}
+
+// Status returns HTTPResponse.Status
+func (r ExecuteOrderResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r ExecuteOrderResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+type GetOrderStatusResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	JSON200      *GetOrderStatusResponseBody
+	JSON400      *BadRequest
+	JSON401      *Unauthorized
+	JSON404      *NotFound
+	JSON500      *InternalError
+}
+
+// Status returns HTTPResponse.Status
+func (r GetOrderStatusResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r GetOrderStatusResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+type ComputeQuoteResponse struct {
 	Body         []byte
 	HTTPResponse *http.Response
 	JSON200      *QuoteResponse
-	JSON400      *struct {
-		Message *string `json:"message,omitempty"`
-	}
-	JSON401 *struct {
-		Message *string `json:"message,omitempty"`
-	}
-	JSON422 *struct {
-		Message *string `json:"message,omitempty"`
-	}
-	JSON500 *struct {
-		Message *string `json:"message,omitempty"`
-	}
+	JSON400      *BadRequest
+	JSON500      *InternalError
+	JSON503      *ServiceUnavailable
 }
 
 // Status returns HTTPResponse.Status
-func (r CreateQuoteResponse) Status() string {
+func (r ComputeQuoteResponse) Status() string {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.Status
 	}
@@ -1525,33 +2501,22 @@ func (r CreateQuoteResponse) Status() string {
 }
 
 // StatusCode returns HTTPResponse.StatusCode
-func (r CreateQuoteResponse) StatusCode() int {
+func (r ComputeQuoteResponse) StatusCode() int {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.StatusCode
 	}
 	return 0
 }
 
-type ExecuteTradeResponse struct {
+type ListTransfersResponse struct {
 	Body         []byte
 	HTTPResponse *http.Response
-	JSON200      *TradeResponse
-	JSON400      *struct {
-		Message *string `json:"message,omitempty"`
-	}
-	JSON401 *struct {
-		Message *string `json:"message,omitempty"`
-	}
-	JSON422 *struct {
-		Message *string `json:"message,omitempty"`
-	}
-	JSON500 *struct {
-		Message *string `json:"message,omitempty"`
-	}
+	JSON200      *ListTransfersResponseBody
+	JSON401      *Unauthorized
 }
 
 // Status returns HTTPResponse.Status
-func (r ExecuteTradeResponse) Status() string {
+func (r ListTransfersResponse) Status() string {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.Status
 	}
@@ -1559,7 +2524,56 @@ func (r ExecuteTradeResponse) Status() string {
 }
 
 // StatusCode returns HTTPResponse.StatusCode
-func (r ExecuteTradeResponse) StatusCode() int {
+func (r ListTransfersResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+type CreateTransferResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	JSON201      *TransferDetail
+	JSON400      *BadRequest
+	JSON401      *Unauthorized
+}
+
+// Status returns HTTPResponse.Status
+func (r CreateTransferResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r CreateTransferResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+type GetTransferResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	JSON200      *TransferDetail
+	JSON400      *BadRequest
+	JSON401      *Unauthorized
+	JSON404      *NotFound
+}
+
+// Status returns HTTPResponse.Status
+func (r GetTransferResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r GetTransferResponse) StatusCode() int {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.StatusCode
 	}
@@ -1569,22 +2583,10 @@ func (r ExecuteTradeResponse) StatusCode() int {
 type ExecuteTransferResponse struct {
 	Body         []byte
 	HTTPResponse *http.Response
-	JSON200      *TransferExecuteResponse
-	JSON400      *struct {
-		Message *string `json:"message,omitempty"`
-	}
-	JSON401 *struct {
-		Message *string `json:"message,omitempty"`
-	}
-	JSON404 *struct {
-		Message *string `json:"message,omitempty"`
-	}
-	JSON422 *struct {
-		Message *string `json:"message,omitempty"`
-	}
-	JSON500 *struct {
-		Message *string `json:"message,omitempty"`
-	}
+	JSON200      *TransferDetail
+	JSON400      *BadRequest
+	JSON401      *Unauthorized
+	JSON409      *Conflict
 }
 
 // Status returns HTTPResponse.Status
@@ -1603,194 +2605,245 @@ func (r ExecuteTransferResponse) StatusCode() int {
 	return 0
 }
 
-type PrepareTransferResponse struct {
-	Body         []byte
-	HTTPResponse *http.Response
-	JSON200      *TransferPrepareResponse
-	JSON400      *struct {
-		Message *string `json:"message,omitempty"`
-	}
-	JSON401 *struct {
-		Message *string `json:"message,omitempty"`
-	}
-	JSON422 *struct {
-		Message *string `json:"message,omitempty"`
-	}
-	JSON500 *struct {
-		Message *string `json:"message,omitempty"`
-	}
-}
-
-// Status returns HTTPResponse.Status
-func (r PrepareTransferResponse) Status() string {
-	if r.HTTPResponse != nil {
-		return r.HTTPResponse.Status
-	}
-	return http.StatusText(0)
-}
-
-// StatusCode returns HTTPResponse.StatusCode
-func (r PrepareTransferResponse) StatusCode() int {
-	if r.HTTPResponse != nil {
-		return r.HTTPResponse.StatusCode
-	}
-	return 0
-}
-
-// GetAssetsWithResponse request returning *GetAssetsResponse
-func (c *ClientWithResponses) GetAssetsWithResponse(ctx context.Context, params *GetAssetsParams, reqEditors ...RequestEditorFn) (*GetAssetsResponse, error) {
-	rsp, err := c.GetAssets(ctx, params, reqEditors...)
+// ListAssetsWithResponse request returning *ListAssetsResponse
+func (c *ClientWithResponses) ListAssetsWithResponse(ctx context.Context, params *ListAssetsParams, reqEditors ...RequestEditorFn) (*ListAssetsResponse, error) {
+	rsp, err := c.ListAssets(ctx, params, reqEditors...)
 	if err != nil {
 		return nil, err
 	}
-	return ParseGetAssetsResponse(rsp)
+	return ParseListAssetsResponse(rsp)
 }
 
 // GetBalancesWithResponse request returning *GetBalancesResponse
-func (c *ClientWithResponses) GetBalancesWithResponse(ctx context.Context, params *GetBalancesParams, reqEditors ...RequestEditorFn) (*GetBalancesResponse, error) {
-	rsp, err := c.GetBalances(ctx, params, reqEditors...)
+func (c *ClientWithResponses) GetBalancesWithResponse(ctx context.Context, reqEditors ...RequestEditorFn) (*GetBalancesResponse, error) {
+	rsp, err := c.GetBalances(ctx, reqEditors...)
 	if err != nil {
 		return nil, err
 	}
 	return ParseGetBalancesResponse(rsp)
 }
 
-// CreateWalletWithBodyWithResponse request with arbitrary body returning *CreateWalletResponse
-func (c *ClientWithResponses) CreateWalletWithBodyWithResponse(ctx context.Context, params *CreateWalletParams, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*CreateWalletResponse, error) {
-	rsp, err := c.CreateWalletWithBody(ctx, params, contentType, body, reqEditors...)
+// ListBalancesWithResponse request returning *ListBalancesResponse
+func (c *ClientWithResponses) ListBalancesWithResponse(ctx context.Context, reqEditors ...RequestEditorFn) (*ListBalancesResponse, error) {
+	rsp, err := c.ListBalances(ctx, reqEditors...)
 	if err != nil {
 		return nil, err
 	}
-	return ParseCreateWalletResponse(rsp)
+	return ParseListBalancesResponse(rsp)
 }
 
-func (c *ClientWithResponses) CreateWalletWithResponse(ctx context.Context, params *CreateWalletParams, body CreateWalletJSONRequestBody, reqEditors ...RequestEditorFn) (*CreateWalletResponse, error) {
-	rsp, err := c.CreateWallet(ctx, params, body, reqEditors...)
+// ListOrdersWithResponse request returning *ListOrdersResponse
+func (c *ClientWithResponses) ListOrdersWithResponse(ctx context.Context, params *ListOrdersParams, reqEditors ...RequestEditorFn) (*ListOrdersResponse, error) {
+	rsp, err := c.ListOrders(ctx, params, reqEditors...)
 	if err != nil {
 		return nil, err
 	}
-	return ParseCreateWalletResponse(rsp)
+	return ParseListOrdersResponse(rsp)
 }
 
-// CreateOnrampWithBodyWithResponse request with arbitrary body returning *CreateOnrampResponse
-func (c *ClientWithResponses) CreateOnrampWithBodyWithResponse(ctx context.Context, params *CreateOnrampParams, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*CreateOnrampResponse, error) {
-	rsp, err := c.CreateOnrampWithBody(ctx, params, contentType, body, reqEditors...)
+// CreateOrderWithBodyWithResponse request with arbitrary body returning *CreateOrderResponse
+func (c *ClientWithResponses) CreateOrderWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*CreateOrderResponse, error) {
+	rsp, err := c.CreateOrderWithBody(ctx, contentType, body, reqEditors...)
 	if err != nil {
 		return nil, err
 	}
-	return ParseCreateOnrampResponse(rsp)
+	return ParseCreateOrderResponse(rsp)
 }
 
-func (c *ClientWithResponses) CreateOnrampWithResponse(ctx context.Context, params *CreateOnrampParams, body CreateOnrampJSONRequestBody, reqEditors ...RequestEditorFn) (*CreateOnrampResponse, error) {
-	rsp, err := c.CreateOnramp(ctx, params, body, reqEditors...)
+func (c *ClientWithResponses) CreateOrderWithResponse(ctx context.Context, body CreateOrderJSONRequestBody, reqEditors ...RequestEditorFn) (*CreateOrderResponse, error) {
+	rsp, err := c.CreateOrder(ctx, body, reqEditors...)
 	if err != nil {
 		return nil, err
 	}
-	return ParseCreateOnrampResponse(rsp)
+	return ParseCreateOrderResponse(rsp)
 }
 
-// GetProfileWithResponse request returning *GetProfileResponse
-func (c *ClientWithResponses) GetProfileWithResponse(ctx context.Context, params *GetProfileParams, reqEditors ...RequestEditorFn) (*GetProfileResponse, error) {
-	rsp, err := c.GetProfile(ctx, params, reqEditors...)
+// CancelOrderWithResponse request returning *CancelOrderResponse
+func (c *ClientWithResponses) CancelOrderWithResponse(ctx context.Context, id string, reqEditors ...RequestEditorFn) (*CancelOrderResponse, error) {
+	rsp, err := c.CancelOrder(ctx, id, reqEditors...)
 	if err != nil {
 		return nil, err
 	}
-	return ParseGetProfileResponse(rsp)
+	return ParseCancelOrderResponse(rsp)
 }
 
-// CreateQuoteWithBodyWithResponse request with arbitrary body returning *CreateQuoteResponse
-func (c *ClientWithResponses) CreateQuoteWithBodyWithResponse(ctx context.Context, params *CreateQuoteParams, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*CreateQuoteResponse, error) {
-	rsp, err := c.CreateQuoteWithBody(ctx, params, contentType, body, reqEditors...)
+// GetOrderWithResponse request returning *GetOrderResponse
+func (c *ClientWithResponses) GetOrderWithResponse(ctx context.Context, id string, reqEditors ...RequestEditorFn) (*GetOrderResponse, error) {
+	rsp, err := c.GetOrder(ctx, id, reqEditors...)
 	if err != nil {
 		return nil, err
 	}
-	return ParseCreateQuoteResponse(rsp)
+	return ParseGetOrderResponse(rsp)
 }
 
-func (c *ClientWithResponses) CreateQuoteWithResponse(ctx context.Context, params *CreateQuoteParams, body CreateQuoteJSONRequestBody, reqEditors ...RequestEditorFn) (*CreateQuoteResponse, error) {
-	rsp, err := c.CreateQuote(ctx, params, body, reqEditors...)
+// ModifyOrderWithBodyWithResponse request with arbitrary body returning *ModifyOrderResponse
+func (c *ClientWithResponses) ModifyOrderWithBodyWithResponse(ctx context.Context, id string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*ModifyOrderResponse, error) {
+	rsp, err := c.ModifyOrderWithBody(ctx, id, contentType, body, reqEditors...)
 	if err != nil {
 		return nil, err
 	}
-	return ParseCreateQuoteResponse(rsp)
+	return ParseModifyOrderResponse(rsp)
 }
 
-// ExecuteTradeWithBodyWithResponse request with arbitrary body returning *ExecuteTradeResponse
-func (c *ClientWithResponses) ExecuteTradeWithBodyWithResponse(ctx context.Context, params *ExecuteTradeParams, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*ExecuteTradeResponse, error) {
-	rsp, err := c.ExecuteTradeWithBody(ctx, params, contentType, body, reqEditors...)
+func (c *ClientWithResponses) ModifyOrderWithResponse(ctx context.Context, id string, body ModifyOrderJSONRequestBody, reqEditors ...RequestEditorFn) (*ModifyOrderResponse, error) {
+	rsp, err := c.ModifyOrder(ctx, id, body, reqEditors...)
 	if err != nil {
 		return nil, err
 	}
-	return ParseExecuteTradeResponse(rsp)
+	return ParseModifyOrderResponse(rsp)
 }
 
-func (c *ClientWithResponses) ExecuteTradeWithResponse(ctx context.Context, params *ExecuteTradeParams, body ExecuteTradeJSONRequestBody, reqEditors ...RequestEditorFn) (*ExecuteTradeResponse, error) {
-	rsp, err := c.ExecuteTrade(ctx, params, body, reqEditors...)
+// PrepareCancelOrderWithResponse request returning *PrepareCancelOrderResponse
+func (c *ClientWithResponses) PrepareCancelOrderWithResponse(ctx context.Context, id string, reqEditors ...RequestEditorFn) (*PrepareCancelOrderResponse, error) {
+	rsp, err := c.PrepareCancelOrder(ctx, id, reqEditors...)
 	if err != nil {
 		return nil, err
 	}
-	return ParseExecuteTradeResponse(rsp)
+	return ParsePrepareCancelOrderResponse(rsp)
+}
+
+// ExecuteCancelOrderWithBodyWithResponse request with arbitrary body returning *ExecuteCancelOrderResponse
+func (c *ClientWithResponses) ExecuteCancelOrderWithBodyWithResponse(ctx context.Context, id string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*ExecuteCancelOrderResponse, error) {
+	rsp, err := c.ExecuteCancelOrderWithBody(ctx, id, contentType, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseExecuteCancelOrderResponse(rsp)
+}
+
+func (c *ClientWithResponses) ExecuteCancelOrderWithResponse(ctx context.Context, id string, body ExecuteCancelOrderJSONRequestBody, reqEditors ...RequestEditorFn) (*ExecuteCancelOrderResponse, error) {
+	rsp, err := c.ExecuteCancelOrder(ctx, id, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseExecuteCancelOrderResponse(rsp)
+}
+
+// ExecuteOrderWithBodyWithResponse request with arbitrary body returning *ExecuteOrderResponse
+func (c *ClientWithResponses) ExecuteOrderWithBodyWithResponse(ctx context.Context, id string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*ExecuteOrderResponse, error) {
+	rsp, err := c.ExecuteOrderWithBody(ctx, id, contentType, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseExecuteOrderResponse(rsp)
+}
+
+func (c *ClientWithResponses) ExecuteOrderWithResponse(ctx context.Context, id string, body ExecuteOrderJSONRequestBody, reqEditors ...RequestEditorFn) (*ExecuteOrderResponse, error) {
+	rsp, err := c.ExecuteOrder(ctx, id, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseExecuteOrderResponse(rsp)
+}
+
+// GetOrderStatusWithResponse request returning *GetOrderStatusResponse
+func (c *ClientWithResponses) GetOrderStatusWithResponse(ctx context.Context, id string, reqEditors ...RequestEditorFn) (*GetOrderStatusResponse, error) {
+	rsp, err := c.GetOrderStatus(ctx, id, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseGetOrderStatusResponse(rsp)
+}
+
+// ComputeQuoteWithBodyWithResponse request with arbitrary body returning *ComputeQuoteResponse
+func (c *ClientWithResponses) ComputeQuoteWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*ComputeQuoteResponse, error) {
+	rsp, err := c.ComputeQuoteWithBody(ctx, contentType, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseComputeQuoteResponse(rsp)
+}
+
+func (c *ClientWithResponses) ComputeQuoteWithResponse(ctx context.Context, body ComputeQuoteJSONRequestBody, reqEditors ...RequestEditorFn) (*ComputeQuoteResponse, error) {
+	rsp, err := c.ComputeQuote(ctx, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseComputeQuoteResponse(rsp)
+}
+
+// ListTransfersWithResponse request returning *ListTransfersResponse
+func (c *ClientWithResponses) ListTransfersWithResponse(ctx context.Context, params *ListTransfersParams, reqEditors ...RequestEditorFn) (*ListTransfersResponse, error) {
+	rsp, err := c.ListTransfers(ctx, params, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseListTransfersResponse(rsp)
+}
+
+// CreateTransferWithBodyWithResponse request with arbitrary body returning *CreateTransferResponse
+func (c *ClientWithResponses) CreateTransferWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*CreateTransferResponse, error) {
+	rsp, err := c.CreateTransferWithBody(ctx, contentType, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseCreateTransferResponse(rsp)
+}
+
+func (c *ClientWithResponses) CreateTransferWithResponse(ctx context.Context, body CreateTransferJSONRequestBody, reqEditors ...RequestEditorFn) (*CreateTransferResponse, error) {
+	rsp, err := c.CreateTransfer(ctx, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseCreateTransferResponse(rsp)
+}
+
+// GetTransferWithResponse request returning *GetTransferResponse
+func (c *ClientWithResponses) GetTransferWithResponse(ctx context.Context, id openapi_types.UUID, reqEditors ...RequestEditorFn) (*GetTransferResponse, error) {
+	rsp, err := c.GetTransfer(ctx, id, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseGetTransferResponse(rsp)
 }
 
 // ExecuteTransferWithBodyWithResponse request with arbitrary body returning *ExecuteTransferResponse
-func (c *ClientWithResponses) ExecuteTransferWithBodyWithResponse(ctx context.Context, params *ExecuteTransferParams, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*ExecuteTransferResponse, error) {
-	rsp, err := c.ExecuteTransferWithBody(ctx, params, contentType, body, reqEditors...)
+func (c *ClientWithResponses) ExecuteTransferWithBodyWithResponse(ctx context.Context, id openapi_types.UUID, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*ExecuteTransferResponse, error) {
+	rsp, err := c.ExecuteTransferWithBody(ctx, id, contentType, body, reqEditors...)
 	if err != nil {
 		return nil, err
 	}
 	return ParseExecuteTransferResponse(rsp)
 }
 
-func (c *ClientWithResponses) ExecuteTransferWithResponse(ctx context.Context, params *ExecuteTransferParams, body ExecuteTransferJSONRequestBody, reqEditors ...RequestEditorFn) (*ExecuteTransferResponse, error) {
-	rsp, err := c.ExecuteTransfer(ctx, params, body, reqEditors...)
+func (c *ClientWithResponses) ExecuteTransferWithResponse(ctx context.Context, id openapi_types.UUID, body ExecuteTransferJSONRequestBody, reqEditors ...RequestEditorFn) (*ExecuteTransferResponse, error) {
+	rsp, err := c.ExecuteTransfer(ctx, id, body, reqEditors...)
 	if err != nil {
 		return nil, err
 	}
 	return ParseExecuteTransferResponse(rsp)
 }
 
-// PrepareTransferWithBodyWithResponse request with arbitrary body returning *PrepareTransferResponse
-func (c *ClientWithResponses) PrepareTransferWithBodyWithResponse(ctx context.Context, params *PrepareTransferParams, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*PrepareTransferResponse, error) {
-	rsp, err := c.PrepareTransferWithBody(ctx, params, contentType, body, reqEditors...)
-	if err != nil {
-		return nil, err
-	}
-	return ParsePrepareTransferResponse(rsp)
-}
-
-func (c *ClientWithResponses) PrepareTransferWithResponse(ctx context.Context, params *PrepareTransferParams, body PrepareTransferJSONRequestBody, reqEditors ...RequestEditorFn) (*PrepareTransferResponse, error) {
-	rsp, err := c.PrepareTransfer(ctx, params, body, reqEditors...)
-	if err != nil {
-		return nil, err
-	}
-	return ParsePrepareTransferResponse(rsp)
-}
-
-// ParseGetAssetsResponse parses an HTTP response from a GetAssetsWithResponse call
-func ParseGetAssetsResponse(rsp *http.Response) (*GetAssetsResponse, error) {
+// ParseListAssetsResponse parses an HTTP response from a ListAssetsWithResponse call
+func ParseListAssetsResponse(rsp *http.Response) (*ListAssetsResponse, error) {
 	bodyBytes, err := io.ReadAll(rsp.Body)
 	defer func() { _ = rsp.Body.Close() }()
 	if err != nil {
 		return nil, err
 	}
 
-	response := &GetAssetsResponse{
+	response := &ListAssetsResponse{
 		Body:         bodyBytes,
 		HTTPResponse: rsp,
 	}
 
 	switch {
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
-		var dest []Asset
+		var dest ListAssetsResponseBody
 		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
 			return nil, err
 		}
 		response.JSON200 = &dest
 
-	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 500:
-		var dest struct {
-			Message *string `json:"message,omitempty"`
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 400:
+		var dest BadRequest
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
 		}
+		response.JSON400 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 500:
+		var dest InternalError
 		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
 			return nil, err
 		}
@@ -1816,25 +2869,94 @@ func ParseGetBalancesResponse(rsp *http.Response) (*GetBalancesResponse, error) 
 
 	switch {
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
-		var dest BalanceResponse
+		var dest ListBalancesResponseBody
 		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
 			return nil, err
 		}
 		response.JSON200 = &dest
 
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 401:
-		var dest struct {
-			Message *string `json:"message,omitempty"`
+		var dest Unauthorized
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
 		}
+		response.JSON401 = &dest
+
+	}
+
+	return response, nil
+}
+
+// ParseListBalancesResponse parses an HTTP response from a ListBalancesWithResponse call
+func ParseListBalancesResponse(rsp *http.Response) (*ListBalancesResponse, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &ListBalancesResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest ListBalancesResponseBody
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 401:
+		var dest Unauthorized
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON401 = &dest
+
+	}
+
+	return response, nil
+}
+
+// ParseListOrdersResponse parses an HTTP response from a ListOrdersWithResponse call
+func ParseListOrdersResponse(rsp *http.Response) (*ListOrdersResponse, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &ListOrdersResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest GetOrdersResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 400:
+		var dest BadRequest
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON400 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 401:
+		var dest Unauthorized
 		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
 			return nil, err
 		}
 		response.JSON401 = &dest
 
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 500:
-		var dest struct {
-			Message *string `json:"message,omitempty"`
-		}
+		var dest InternalError
 		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
 			return nil, err
 		}
@@ -1845,49 +2967,118 @@ func ParseGetBalancesResponse(rsp *http.Response) (*GetBalancesResponse, error) 
 	return response, nil
 }
 
-// ParseCreateWalletResponse parses an HTTP response from a CreateWalletWithResponse call
-func ParseCreateWalletResponse(rsp *http.Response) (*CreateWalletResponse, error) {
+// ParseCreateOrderResponse parses an HTTP response from a CreateOrderWithResponse call
+func ParseCreateOrderResponse(rsp *http.Response) (*CreateOrderResponse, error) {
 	bodyBytes, err := io.ReadAll(rsp.Body)
 	defer func() { _ = rsp.Body.Close() }()
 	if err != nil {
 		return nil, err
 	}
 
-	response := &CreateWalletResponse{
+	response := &CreateOrderResponse{
 		Body:         bodyBytes,
 		HTTPResponse: rsp,
 	}
 
 	switch {
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 201:
-		var dest WalletCreationResult
+		var dest CreateOrderResponseBody
 		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
 			return nil, err
 		}
 		response.JSON201 = &dest
 
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 400:
-		var dest struct {
-			Message *string `json:"message,omitempty"`
-		}
+		var dest BadRequest
 		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
 			return nil, err
 		}
 		response.JSON400 = &dest
 
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 401:
-		var dest struct {
-			Message *string `json:"message,omitempty"`
-		}
+		var dest Unauthorized
 		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
 			return nil, err
 		}
 		response.JSON401 = &dest
 
-	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 500:
-		var dest struct {
-			Message *string `json:"message,omitempty"`
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 403:
+		var dest Forbidden
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
 		}
+		response.JSON403 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 404:
+		var dest NotFound
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON404 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 500:
+		var dest InternalError
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON500 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 503:
+		var dest ServiceUnavailable
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON503 = &dest
+
+	}
+
+	return response, nil
+}
+
+// ParseCancelOrderResponse parses an HTTP response from a CancelOrderWithResponse call
+func ParseCancelOrderResponse(rsp *http.Response) (*CancelOrderResponse, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &CancelOrderResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 202:
+		var dest map[string]interface{}
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON202 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 400:
+		var dest BadRequest
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON400 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 401:
+		var dest Unauthorized
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON401 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 404:
+		var dest NotFound
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON404 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 500:
+		var dest InternalError
 		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
 			return nil, err
 		}
@@ -1898,58 +3089,50 @@ func ParseCreateWalletResponse(rsp *http.Response) (*CreateWalletResponse, error
 	return response, nil
 }
 
-// ParseCreateOnrampResponse parses an HTTP response from a CreateOnrampWithResponse call
-func ParseCreateOnrampResponse(rsp *http.Response) (*CreateOnrampResponse, error) {
+// ParseGetOrderResponse parses an HTTP response from a GetOrderWithResponse call
+func ParseGetOrderResponse(rsp *http.Response) (*GetOrderResponse, error) {
 	bodyBytes, err := io.ReadAll(rsp.Body)
 	defer func() { _ = rsp.Body.Close() }()
 	if err != nil {
 		return nil, err
 	}
 
-	response := &CreateOnrampResponse{
+	response := &GetOrderResponse{
 		Body:         bodyBytes,
 		HTTPResponse: rsp,
 	}
 
 	switch {
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
-		var dest OnrampResponse
+		var dest OrderDetail
 		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
 			return nil, err
 		}
 		response.JSON200 = &dest
 
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 400:
-		var dest struct {
-			Message *string `json:"message,omitempty"`
-		}
+		var dest BadRequest
 		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
 			return nil, err
 		}
 		response.JSON400 = &dest
 
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 401:
-		var dest struct {
-			Message *string `json:"message,omitempty"`
-		}
+		var dest Unauthorized
 		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
 			return nil, err
 		}
 		response.JSON401 = &dest
 
-	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 422:
-		var dest struct {
-			Message *string `json:"message,omitempty"`
-		}
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 404:
+		var dest NotFound
 		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
 			return nil, err
 		}
-		response.JSON422 = &dest
+		response.JSON404 = &dest
 
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 500:
-		var dest struct {
-			Message *string `json:"message,omitempty"`
-		}
+		var dest InternalError
 		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
 			return nil, err
 		}
@@ -1960,49 +3143,315 @@ func ParseCreateOnrampResponse(rsp *http.Response) (*CreateOnrampResponse, error
 	return response, nil
 }
 
-// ParseGetProfileResponse parses an HTTP response from a GetProfileWithResponse call
-func ParseGetProfileResponse(rsp *http.Response) (*GetProfileResponse, error) {
+// ParseModifyOrderResponse parses an HTTP response from a ModifyOrderWithResponse call
+func ParseModifyOrderResponse(rsp *http.Response) (*ModifyOrderResponse, error) {
 	bodyBytes, err := io.ReadAll(rsp.Body)
 	defer func() { _ = rsp.Body.Close() }()
 	if err != nil {
 		return nil, err
 	}
 
-	response := &GetProfileResponse{
+	response := &ModifyOrderResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 202:
+		var dest map[string]interface{}
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON202 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 400:
+		var dest BadRequest
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON400 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 401:
+		var dest Unauthorized
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON401 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 404:
+		var dest NotFound
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON404 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 500:
+		var dest InternalError
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON500 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 503:
+		var dest ServiceUnavailable
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON503 = &dest
+
+	}
+
+	return response, nil
+}
+
+// ParsePrepareCancelOrderResponse parses an HTTP response from a PrepareCancelOrderWithResponse call
+func ParsePrepareCancelOrderResponse(rsp *http.Response) (*PrepareCancelOrderResponse, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &PrepareCancelOrderResponse{
 		Body:         bodyBytes,
 		HTTPResponse: rsp,
 	}
 
 	switch {
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
-		var dest ProfileResponse
+		var dest CancelOrderResponseBody
 		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
 			return nil, err
 		}
 		response.JSON200 = &dest
 
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 400:
-		var dest struct {
-			Message *string `json:"message,omitempty"`
-		}
+		var dest BadRequest
 		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
 			return nil, err
 		}
 		response.JSON400 = &dest
 
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 401:
-		var dest struct {
-			Message *string `json:"message,omitempty"`
-		}
+		var dest Unauthorized
 		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
 			return nil, err
 		}
 		response.JSON401 = &dest
 
-	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 500:
-		var dest struct {
-			Message *string `json:"message,omitempty"`
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 404:
+		var dest NotFound
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
 		}
+		response.JSON404 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 500:
+		var dest InternalError
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON500 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 503:
+		var dest ServiceUnavailable
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON503 = &dest
+
+	}
+
+	return response, nil
+}
+
+// ParseExecuteCancelOrderResponse parses an HTTP response from a ExecuteCancelOrderWithResponse call
+func ParseExecuteCancelOrderResponse(rsp *http.Response) (*ExecuteCancelOrderResponse, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &ExecuteCancelOrderResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest ExecuteOrderResponseBody
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 400:
+		var dest BadRequest
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON400 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 401:
+		var dest Unauthorized
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON401 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 404:
+		var dest NotFound
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON404 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 409:
+		var dest Conflict
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON409 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 500:
+		var dest InternalError
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON500 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 503:
+		var dest ServiceUnavailable
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON503 = &dest
+
+	}
+
+	return response, nil
+}
+
+// ParseExecuteOrderResponse parses an HTTP response from a ExecuteOrderWithResponse call
+func ParseExecuteOrderResponse(rsp *http.Response) (*ExecuteOrderResponse, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &ExecuteOrderResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest ExecuteOrderResponseBody
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 400:
+		var dest BadRequest
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON400 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 401:
+		var dest Unauthorized
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON401 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 403:
+		var dest Forbidden
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON403 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 404:
+		var dest NotFound
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON404 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 409:
+		var dest Conflict
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON409 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 500:
+		var dest InternalError
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON500 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 503:
+		var dest ServiceUnavailable
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON503 = &dest
+
+	}
+
+	return response, nil
+}
+
+// ParseGetOrderStatusResponse parses an HTTP response from a GetOrderStatusWithResponse call
+func ParseGetOrderStatusResponse(rsp *http.Response) (*GetOrderStatusResponse, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &GetOrderStatusResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest GetOrderStatusResponseBody
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 400:
+		var dest BadRequest
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON400 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 401:
+		var dest Unauthorized
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON401 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 404:
+		var dest NotFound
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON404 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 500:
+		var dest InternalError
 		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
 			return nil, err
 		}
@@ -2013,15 +3462,15 @@ func ParseGetProfileResponse(rsp *http.Response) (*GetProfileResponse, error) {
 	return response, nil
 }
 
-// ParseCreateQuoteResponse parses an HTTP response from a CreateQuoteWithResponse call
-func ParseCreateQuoteResponse(rsp *http.Response) (*CreateQuoteResponse, error) {
+// ParseComputeQuoteResponse parses an HTTP response from a ComputeQuoteWithResponse call
+func ParseComputeQuoteResponse(rsp *http.Response) (*ComputeQuoteResponse, error) {
 	bodyBytes, err := io.ReadAll(rsp.Body)
 	defer func() { _ = rsp.Body.Close() }()
 	if err != nil {
 		return nil, err
 	}
 
-	response := &CreateQuoteResponse{
+	response := &ComputeQuoteResponse{
 		Body:         bodyBytes,
 		HTTPResponse: rsp,
 	}
@@ -2035,102 +3484,145 @@ func ParseCreateQuoteResponse(rsp *http.Response) (*CreateQuoteResponse, error) 
 		response.JSON200 = &dest
 
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 400:
-		var dest struct {
-			Message *string `json:"message,omitempty"`
-		}
+		var dest BadRequest
 		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
 			return nil, err
 		}
 		response.JSON400 = &dest
 
-	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 401:
-		var dest struct {
-			Message *string `json:"message,omitempty"`
-		}
-		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
-			return nil, err
-		}
-		response.JSON401 = &dest
-
-	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 422:
-		var dest struct {
-			Message *string `json:"message,omitempty"`
-		}
-		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
-			return nil, err
-		}
-		response.JSON422 = &dest
-
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 500:
-		var dest struct {
-			Message *string `json:"message,omitempty"`
-		}
+		var dest InternalError
 		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
 			return nil, err
 		}
 		response.JSON500 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 503:
+		var dest ServiceUnavailable
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON503 = &dest
 
 	}
 
 	return response, nil
 }
 
-// ParseExecuteTradeResponse parses an HTTP response from a ExecuteTradeWithResponse call
-func ParseExecuteTradeResponse(rsp *http.Response) (*ExecuteTradeResponse, error) {
+// ParseListTransfersResponse parses an HTTP response from a ListTransfersWithResponse call
+func ParseListTransfersResponse(rsp *http.Response) (*ListTransfersResponse, error) {
 	bodyBytes, err := io.ReadAll(rsp.Body)
 	defer func() { _ = rsp.Body.Close() }()
 	if err != nil {
 		return nil, err
 	}
 
-	response := &ExecuteTradeResponse{
+	response := &ListTransfersResponse{
 		Body:         bodyBytes,
 		HTTPResponse: rsp,
 	}
 
 	switch {
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
-		var dest TradeResponse
+		var dest ListTransfersResponseBody
 		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
 			return nil, err
 		}
 		response.JSON200 = &dest
 
-	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 400:
-		var dest struct {
-			Message *string `json:"message,omitempty"`
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 401:
+		var dest Unauthorized
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
 		}
+		response.JSON401 = &dest
+
+	}
+
+	return response, nil
+}
+
+// ParseCreateTransferResponse parses an HTTP response from a CreateTransferWithResponse call
+func ParseCreateTransferResponse(rsp *http.Response) (*CreateTransferResponse, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &CreateTransferResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 201:
+		var dest TransferDetail
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON201 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 400:
+		var dest BadRequest
 		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
 			return nil, err
 		}
 		response.JSON400 = &dest
 
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 401:
-		var dest struct {
-			Message *string `json:"message,omitempty"`
-		}
+		var dest Unauthorized
 		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
 			return nil, err
 		}
 		response.JSON401 = &dest
 
-	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 422:
-		var dest struct {
-			Message *string `json:"message,omitempty"`
-		}
-		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
-			return nil, err
-		}
-		response.JSON422 = &dest
+	}
 
-	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 500:
-		var dest struct {
-			Message *string `json:"message,omitempty"`
-		}
+	return response, nil
+}
+
+// ParseGetTransferResponse parses an HTTP response from a GetTransferWithResponse call
+func ParseGetTransferResponse(rsp *http.Response) (*GetTransferResponse, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &GetTransferResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest TransferDetail
 		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
 			return nil, err
 		}
-		response.JSON500 = &dest
+		response.JSON200 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 400:
+		var dest BadRequest
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON400 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 401:
+		var dest Unauthorized
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON401 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 404:
+		var dest NotFound
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON404 = &dest
 
 	}
 
@@ -2152,118 +3644,32 @@ func ParseExecuteTransferResponse(rsp *http.Response) (*ExecuteTransferResponse,
 
 	switch {
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
-		var dest TransferExecuteResponse
+		var dest TransferDetail
 		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
 			return nil, err
 		}
 		response.JSON200 = &dest
 
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 400:
-		var dest struct {
-			Message *string `json:"message,omitempty"`
-		}
+		var dest BadRequest
 		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
 			return nil, err
 		}
 		response.JSON400 = &dest
 
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 401:
-		var dest struct {
-			Message *string `json:"message,omitempty"`
-		}
+		var dest Unauthorized
 		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
 			return nil, err
 		}
 		response.JSON401 = &dest
 
-	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 404:
-		var dest struct {
-			Message *string `json:"message,omitempty"`
-		}
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 409:
+		var dest Conflict
 		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
 			return nil, err
 		}
-		response.JSON404 = &dest
-
-	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 422:
-		var dest struct {
-			Message *string `json:"message,omitempty"`
-		}
-		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
-			return nil, err
-		}
-		response.JSON422 = &dest
-
-	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 500:
-		var dest struct {
-			Message *string `json:"message,omitempty"`
-		}
-		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
-			return nil, err
-		}
-		response.JSON500 = &dest
-
-	}
-
-	return response, nil
-}
-
-// ParsePrepareTransferResponse parses an HTTP response from a PrepareTransferWithResponse call
-func ParsePrepareTransferResponse(rsp *http.Response) (*PrepareTransferResponse, error) {
-	bodyBytes, err := io.ReadAll(rsp.Body)
-	defer func() { _ = rsp.Body.Close() }()
-	if err != nil {
-		return nil, err
-	}
-
-	response := &PrepareTransferResponse{
-		Body:         bodyBytes,
-		HTTPResponse: rsp,
-	}
-
-	switch {
-	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
-		var dest TransferPrepareResponse
-		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
-			return nil, err
-		}
-		response.JSON200 = &dest
-
-	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 400:
-		var dest struct {
-			Message *string `json:"message,omitempty"`
-		}
-		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
-			return nil, err
-		}
-		response.JSON400 = &dest
-
-	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 401:
-		var dest struct {
-			Message *string `json:"message,omitempty"`
-		}
-		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
-			return nil, err
-		}
-		response.JSON401 = &dest
-
-	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 422:
-		var dest struct {
-			Message *string `json:"message,omitempty"`
-		}
-		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
-			return nil, err
-		}
-		response.JSON422 = &dest
-
-	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 500:
-		var dest struct {
-			Message *string `json:"message,omitempty"`
-		}
-		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
-			return nil, err
-		}
-		response.JSON500 = &dest
+		response.JSON409 = &dest
 
 	}
 
