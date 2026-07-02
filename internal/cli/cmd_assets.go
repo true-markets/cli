@@ -26,7 +26,7 @@ func newAssetsCmd() *cobra.Command {
 			host := ContextHost(ctx)
 			authToken := ContextAuthToken(ctx)
 
-			cli, err := newConductorClient(host, authToken)
+			cli, err := newGatewayClient(host, authToken)
 			if err != nil {
 				return fmt.Errorf("create client: %w", err)
 			}

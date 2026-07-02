@@ -14,8 +14,14 @@ const (
 	apiHost    = "https://api.truemarkets.co"
 	apiVersion = "2026-01-26"
 
-	// gatewayPath is the base path of the Conductor gateway on the API host.
-	gatewayPath = "/v1/gateway"
+	// gatewayPath is the base path of the gateway on the API host.
+	//
+	// TEMPORARY: /v1/gateway 404s in production — the envoy routing for it
+	// isn't live yet even after the latest deploy. /v1/conductor is the
+	// deprecated-but-currently-working path (confirmed serving real traffic
+	// for /assets and /balances as of 2026-07-02). Switch back to /v1/gateway
+	// once its routing is confirmed live.
+	gatewayPath = "/v1/conductor"
 )
 
 // resolveAuthToken returns the bearer token from env var or stored credentials.
@@ -65,10 +71,10 @@ func newAPIClient(host, authToken string) (*deficore.ClientWithResponses, error)
 	return c, nil
 }
 
-// newConductorClient creates a Conductor gateway client with the resolved auth
-// token. The gateway is reached at host + gatewayPath; unlike the legacy DeFi
-// client it does not inject a `version` query parameter.
-func newConductorClient(host, authToken string) (*client.ClientWithResponses, error) {
+// newGatewayClient creates a gateway client with the resolved auth token. The
+// gateway is reached at host + gatewayPath; unlike the legacy DeFi client it
+// does not inject a `version` query parameter.
+func newGatewayClient(host, authToken string) (*client.ClientWithResponses, error) {
 	httpClient := newHTTPClient()
 
 	c, err := client.NewClientWithResponses(
@@ -80,7 +86,7 @@ func newConductorClient(host, authToken string) (*client.ClientWithResponses, er
 		}),
 	)
 	if err != nil {
-		return nil, fmt.Errorf("create conductor client: %w", err)
+		return nil, fmt.Errorf("create gateway client: %w", err)
 	}
 	return c, nil
 }

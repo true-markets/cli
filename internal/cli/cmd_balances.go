@@ -34,7 +34,7 @@ func runBalances(cmd *cobra.Command, _ []string) error {
 	}
 	ctx = cmd.Context() // re-read in case requireAuth updated it
 
-	cli, err := newConductorClient(host, authToken)
+	cli, err := newGatewayClient(host, authToken)
 	if err != nil {
 		return fmt.Errorf("create client: %w", err)
 	}

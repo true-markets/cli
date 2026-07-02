@@ -685,7 +685,7 @@ func TestBuildQuoteDisplay(t *testing.T) {
 }
 
 func TestFetchBalances(t *testing.T) {
-	// Mirror the decode path in runBalances: call the Conductor client against a
+	// Mirror the decode path in runBalances: call the gateway client against a
 	// mock gateway and read the balances from the response body.
 	decodeBalances := func(t *testing.T, serverURL string) ([]client.BalanceItem, error) {
 		t.Helper()

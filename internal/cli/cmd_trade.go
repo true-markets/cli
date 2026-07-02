@@ -82,7 +82,7 @@ func executeTradeFlow(cmd *cobra.Command, side, token, amount string) error {
 		return &CLIError{Code: ExitAuth, Message: "api key required - run 'tm config set api_key <key>'"}
 	}
 
-	cli, err := newConductorClient(host, authToken)
+	cli, err := newGatewayClient(host, authToken)
 	if err != nil {
 		return fmt.Errorf("create client: %w", err)
 	}
@@ -258,8 +258,8 @@ func createOrder(
 	}
 
 	chainEnum := client.Chain(inputs.Chain)
-	// quote_asset is intentionally omitted: Conductor resolves and overwrites it
-	// per chain for DeFi orders, ignoring any client value.
+	// quote_asset is intentionally omitted: the gateway resolves and overwrites
+	// it per chain for DeFi orders, ignoring any client value.
 	req := client.CreateOrderRequest{
 		BaseAsset: baseAddress,
 		Chain:     &chainEnum,

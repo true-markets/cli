@@ -52,7 +52,7 @@ func executeTransferFlow(cmd *cobra.Command, to, token, amount string) error {
 		return &CLIError{Code: ExitAuth, Message: "api key required - run 'tm config set api_key <key>'"}
 	}
 
-	cli, err := newConductorClient(host, authToken)
+	cli, err := newGatewayClient(host, authToken)
 	if err != nil {
 		return fmt.Errorf("create client: %w", err)
 	}
@@ -72,7 +72,7 @@ func executeTransferFlow(cmd *cobra.Command, to, token, amount string) error {
 	dryRun, _ := cmd.Flags().GetBool("dry-run")
 	force, _ := cmd.Flags().GetBool("force")
 
-	// Resolve the asset to its Conductor asset_id
+	// Resolve the asset to its gateway asset_id
 	assets, err := fetchAssetsRaw(ctx, cli)
 	if err != nil {
 		return fmt.Errorf("fetch assets: %w", err)
